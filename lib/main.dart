@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:fpms_app/Screens/Forget_password_screen.dart';
+import 'package:fpms_app/Screens/check_email_screen.dart';
+import 'package:fpms_app/Screens/password_changed_success_screen.dart';
+import 'package:fpms_app/Screens/reset_password_screen.dart';
 import 'package:fpms_app/core/constants/app_colors.dart';
 
 // Import all your screens
@@ -26,13 +30,17 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      initialRoute: '/',
+      initialRoute: '/login',
 
       routes: {
         '/': (context) => const SplashScreen(),
-        '/onboarding': (context) => const OnboardingScreen(), // <-- ADD THIS ROUTE
+        '/onboarding': (context) => const OnboardingScreen(), 
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
+        '/forgot-password': (context) => const ForgotPasswordScreen(),
+        '/check-email': (context) => const CheckEmailScreen(),
+        '/reset-password': (context) => const ResetPasswordScreen(),
+        '/password-changed-success': (context) => const PasswordChangedSuccessScreen(),
       },
     );
   }

@@ -134,7 +134,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/forgot-password');
+                      },
                       child: Text(
                         "Forgot password?",
                         style: GoogleFonts.poppins(
