@@ -104,7 +104,7 @@ class CheckEmailScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    Navigator.pushNamed(context, '/login');
+                    Navigator.pushNamed(context, '/reset-password');
                   },
                   child: Text(
                     "Done",

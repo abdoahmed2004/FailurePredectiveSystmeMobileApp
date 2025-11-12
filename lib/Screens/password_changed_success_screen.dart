@@ -68,7 +68,7 @@ class PasswordChangedSuccessScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    Navigator.pop(context); // Or navigate to Login page
+                    Navigator.pushNamed(context, '/login');
                   },
                   child: Text(
                     "Back to Login",

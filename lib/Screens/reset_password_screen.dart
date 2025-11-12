@@ -188,7 +188,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
                       // Navigate back to login (you can replace this later)
                       Future.delayed(const Duration(seconds: 2), () {
-                        Navigator.pop(context);
+                        Navigator.pushNamed(
+                            context, '/password-changed-success');
                       });
                     },
                     child: Text(
