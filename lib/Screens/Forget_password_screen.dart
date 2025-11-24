@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+// --- ADDED IMPORTS ---
+import '../Services/auth_service.dart';
+import 'login_screen.dart'; // Navigate back to login
+// Note: We don't need a token screen, but we do need a Confirmation screen
+import 'check_Email_Screen.dart'; 
+// ---------------------
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -10,6 +16,68 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController emailController = TextEditingController();
+  // --- ADDED STATE ---
+  bool _isLoading = false;
+  // -------------------
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    super.dispose();
+  }
+
+  void _showSnackbar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : const Color(0xFFFF9800), // Amber for success
+        duration: const Duration(seconds: 5),
+      ),
+    );
+  }
+
+  // --- API INTEGRATION FUNCTION ---
+  void _handleSendLink() async {
+    final email = emailController.text.trim();
+    if (email.isEmpty) {
+      _showSnackbar("Please enter your email address", isError: true);
+      return;
+    }
+    
+    // Optional: Simple email format validation
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+       _showSnackbar("Please enter a valid email address.", isError: true);
+       return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 1. Call the backend API to initiate the password reset process
+      await AuthService().forgotPassword(email: email);
+      
+      // 2. If the API call succeeds (Status 200), navigate to the confirmation screen.
+      // The backend returns a generic success message to prevent user enumeration,
+      // so we navigate immediately and let the user check their email.
+      
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => CheckEmailScreen(email: email), // Use CheckEmailScreen for confirmation
+        ),
+      );
+
+    } catch (e) {
+      // 3. Show error if network fails or the API returns a non-200 status
+      _showSnackbar("Failed: ${e.toString().replaceAll('Exception: ', '')}", isError: true);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+  // ---------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -52,10 +120,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 // 📧 Email Field
                 TextField(
                   controller: emailController,
+                  keyboardType: TextInputType.emailAddress, // Added keyboard type
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     prefixIcon:
-                        const Icon(Icons.email_outlined, color: Colors.white54),
+                        const Icon(Icons.email_outlined, color: Color(0xFFFF9800)),
                     hintText: 'Email',
                     hintStyle: GoogleFonts.poppins(color: Colors.white54),
                     filled: true,
@@ -88,37 +157,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () {
-                      final email = emailController.text.trim();
-                      if (email.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Please enter your email address"),
-                            backgroundColor: Colors.redAccent,
+                    onPressed: _isLoading ? null : _handleSendLink, // Call API integration
+                    child: _isLoading 
+                      ? const Center(child: SizedBox(
+                          height: 20, width: 20, 
+                          child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
+                        ))
+                      : Text(
+                          "Send Reset Link",
+                          style: GoogleFonts.poppins(
+                            color: Colors.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
                           ),
-                        );
-                      } else {
-                        // Handle password reset logic here
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              "Reset link sent to $email",
-                              style: GoogleFonts.poppins(),
-                            ),
-                            backgroundColor: const Color(0xFFFF9800),
-                          ),
-                        );
-                        Navigator.pushNamed(context, '/check-email');
-                      }
-                    },
-                    child: Text(
-                      "Send Reset Link",
-                      style: GoogleFonts.poppins(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                        ),
                   ),
                 ),
 
@@ -127,7 +179,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 Center(
                   child: TextButton(
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.pop(context); // Go back to LoginScreen
                     },
                     child: Text(
                       "Back to Login",

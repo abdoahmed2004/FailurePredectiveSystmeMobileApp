@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+// --- ADDED IMPORTS ---
+import '../Services/auth_service.dart';
+import '../Models/user_model.dart';
+import 'Register_screen.dart'; 
+// ---------------------
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -8,8 +14,64 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // --- ADDED CONTROLLERS AND STATE ---
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+  // -----------------------------------
+  
   bool rememberMe = false;
   bool obscurePassword = true;
+
+  // Helper to show messages to the user
+  void _showSnackbar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  // --- LOGIN FUNCTION INTEGRATION ---
+  void _handleLogin() async {
+    // --- Local Validation ---
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      _showSnackbar("Please enter both email and password.", isError: true);
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // --- API Call to Node.js Backend ---
+      final AuthResponse response = await AuthService().loginUser(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      // --- Success Handling ---
+      _showSnackbar(
+        "Login successful! Welcome, ${response.user.fullName} (${response.user.role})!", 
+        isError: false
+      );
+      
+      // Navigate to your main application dashboard here (e.g., Navigator.pushReplacement)
+      print("Token received: ${response.token}");
+
+    } catch (e) {
+      // --- Error Handling (e.g., Invalid Credentials) ---
+      _showSnackbar("Login Failed: ${e.toString().replaceAll('Exception: ', '')}", isError: true);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+  // -------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -27,12 +89,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        // Optional: Pop navigation stack if not root
+                        Navigator.pop(context); 
+                      },
                       icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white70, size: 20),
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/register');
+                        // Navigate to the RegistrationScreen
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterScreen(),
+                          ),
+                        );
                       },
                       child: Text(
                         "Register",
@@ -63,6 +133,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Email Field
                 TextField(
+                  controller: _emailController, // ADDED
+                  keyboardType: TextInputType.emailAddress, // ADDED
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.email_outlined, color: Colors.white54),
@@ -84,6 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Password Field
                 TextField(
+                  controller: _passwordController, // ADDED
                   obscureText: obscurePassword,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
@@ -105,7 +178,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     fillColor: const Color(0xFF121212),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFF9800)),
+                      // Ensure all borders match the style
+                      borderSide: const BorderSide(color: Color(0xFFFF9800)), 
                     ),
                   ),
                 ),
@@ -135,7 +209,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/forgot-password');
+                         Navigator.pushNamed(context, '/forgot-password'); // Use actual route
+                        //_showSnackbar("Forgot password functionality not implemented.", isError: false);
                       },
                       child: Text(
                         "Forgot password?",
@@ -161,15 +236,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () {},
-                    child: Text(
-                      "Continue",
-                      style: GoogleFonts.poppins(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    onPressed: _isLoading ? null : _handleLogin, // INTEGRATED LOGIN CALL
+                    child: _isLoading 
+                      ? const CircularProgressIndicator(color: Colors.black) // ADDED LOADING STATE
+                      : Text(
+                          "Continue",
+                          style: GoogleFonts.poppins(
+                            color: Colors.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                   ),
                 ),
 
@@ -199,7 +276,9 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-Widget _buildSocialButton(IconData icon, String text) {
+  
+  // Helper for social buttons
+  Widget _buildSocialButton(IconData icon, String text) {
     return Container(
       width: double.infinity,
       height: 50,

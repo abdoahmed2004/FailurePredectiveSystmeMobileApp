@@ -11,6 +11,7 @@ import 'package:fpms_app/Screens/onboarding_screen.dart'; // <-- IMPORT NEW SCRE
 import 'package:fpms_app/Screens/Login_screen.dart';
 import 'package:fpms_app/Screens/Register_screen.dart';
 
+
 void main() {
   runApp(const MyApp());
 }
@@ -30,7 +31,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      initialRoute: '/',
+      initialRoute: '/', // <-- SET INITIAL ROUTE HERE
 
       routes: {
         '/': (context) => const SplashScreen(),
@@ -38,7 +39,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
         '/forgot-password': (context) => const ForgotPasswordScreen(),
-        '/check-email': (context) => const CheckEmailScreen(),
+        '/check-email': (context) => CheckEmailScreen(email: ModalRoute.of(context)!.settings.arguments as String),
         '/reset-password': (context) => const ResetPasswordScreen(),
         '/password-changed-success': (context) => const PasswordChangedSuccessScreen(),
       },
