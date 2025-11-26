@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 // --- ADDED IMPORTS ---
 import '../Services/auth_service.dart';
 import '../Models/user_model.dart';
-import 'Register_screen.dart'; 
+import 'Register_screen.dart';
 // ---------------------
 
 class LoginScreen extends StatefulWidget {
@@ -19,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   // -----------------------------------
-  
+
   bool rememberMe = false;
   bool obscurePassword = true;
 
@@ -55,16 +55,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // --- Success Handling ---
       _showSnackbar(
-        "Login successful! Welcome, ${response.user.fullName} (${response.user.role})!", 
-        isError: false
-      );
-      
-      // Navigate to your main application dashboard here (e.g., Navigator.pushReplacement)
-      print("Token received: ${response.token}");
+          "Login successful! Welcome, ${response.user.fullName} (${response.user.role})!",
+          isError: false);
 
+      // Navigate to Home and clear back stack
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+
+      // Optionally log token for debugging
+      print("Token received: ${response.token}");
     } catch (e) {
       // --- Error Handling (e.g., Invalid Credentials) ---
-      _showSnackbar("Login Failed: ${e.toString().replaceAll('Exception: ', '')}", isError: true);
+      _showSnackbar(
+          "Login Failed: ${e.toString().replaceAll('Exception: ', '')}",
+          isError: true);
     } finally {
       setState(() {
         _isLoading = false;
@@ -91,9 +94,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     IconButton(
                       onPressed: () {
                         // Optional: Pop navigation stack if not root
-                        Navigator.pop(context); 
+                        Navigator.pop(context);
                       },
-                      icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white70, size: 20),
+                      icon: const Icon(Icons.arrow_back_ios_new,
+                          color: Colors.white70, size: 20),
                     ),
                     TextButton(
                       onPressed: () {
@@ -127,7 +131,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 6),
                 Text(
                   "Please login to your account",
-                  style: GoogleFonts.poppins(color: Colors.white60, fontSize: 14),
+                  style:
+                      GoogleFonts.poppins(color: Colors.white60, fontSize: 14),
                 ),
                 const SizedBox(height: 40),
 
@@ -137,7 +142,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress, // ADDED
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.email_outlined, color: Colors.white54),
+                    prefixIcon:
+                        const Icon(Icons.email_outlined, color: Colors.white54),
                     hintText: 'Email',
                     hintStyle: GoogleFonts.poppins(color: Colors.white54),
                     filled: true,
@@ -148,7 +154,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFF9800), width: 2),
+                      borderSide:
+                          const BorderSide(color: Color(0xFFFF9800), width: 2),
                     ),
                   ),
                 ),
@@ -160,10 +167,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: obscurePassword,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.lock_outline, color: Colors.white54),
+                    prefixIcon:
+                        const Icon(Icons.lock_outline, color: Colors.white54),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.white54,
                       ),
                       onPressed: () {
@@ -179,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       // Ensure all borders match the style
-                      borderSide: const BorderSide(color: Color(0xFFFF9800)), 
+                      borderSide: const BorderSide(color: Color(0xFFFF9800)),
                     ),
                   ),
                 ),
@@ -203,13 +213,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         Text(
                           "Remember me",
-                          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
+                          style: GoogleFonts.poppins(
+                              color: Colors.white70, fontSize: 14),
                         ),
                       ],
                     ),
                     TextButton(
                       onPressed: () {
-                         Navigator.pushNamed(context, '/forgot-password'); // Use actual route
+                        Navigator.pushNamed(
+                            context, '/forgot-password'); // Use actual route
                         //_showSnackbar("Forgot password functionality not implemented.", isError: false);
                       },
                       child: Text(
@@ -236,17 +248,20 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: _isLoading ? null : _handleLogin, // INTEGRATED LOGIN CALL
-                    child: _isLoading 
-                      ? const CircularProgressIndicator(color: Colors.black) // ADDED LOADING STATE
-                      : Text(
-                          "Continue",
-                          style: GoogleFonts.poppins(
-                            color: Colors.black,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                    onPressed: _isLoading
+                        ? null
+                        : _handleLogin, // INTEGRATED LOGIN CALL
+                    child: _isLoading
+                        ? const CircularProgressIndicator(
+                            color: Colors.black) // ADDED LOADING STATE
+                        : Text(
+                            "Continue",
+                            style: GoogleFonts.poppins(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
                   ),
                 ),
 
@@ -276,7 +291,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-  
+
   // Helper for social buttons
   Widget _buildSocialButton(IconData icon, String text) {
     return Container(

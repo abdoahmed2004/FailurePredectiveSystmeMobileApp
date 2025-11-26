@@ -40,7 +40,7 @@ class MyApp extends StatelessWidget {
         textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
       ),
 
-      initialRoute: '/home',
+      initialRoute: '/login',
 
       routes: {
         '/': (context) => const SplashScreen(),

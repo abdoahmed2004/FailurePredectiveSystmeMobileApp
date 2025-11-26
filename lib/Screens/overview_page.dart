@@ -69,7 +69,7 @@ class OverviewPage extends StatelessWidget {
               onPressed: () => Navigator.pushNamed(context, '/machines'),
               icon: const Icon(Icons.list_alt, size: 18),
               label: const Text('View All'),
-              style: TextButton.styleFrom(foregroundColor: Colors.blueAccent),
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
             ),
           ],
         ),

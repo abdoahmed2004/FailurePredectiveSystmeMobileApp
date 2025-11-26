@@ -24,14 +24,19 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
   @override
   Widget build(BuildContext context) {
     // 1. Get the theme setting passed from Home Page
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final isDarkMode = args?['isDarkMode'] ?? true; // Default to dark
 
     // 2. Define Dynamic Colors
     final textColor = isDarkMode ? Colors.white : Colors.black;
-    final cardColor = isDarkMode ? const Color(0xFF1E1E1E).withOpacity(0.9) : Colors.white.withOpacity(0.9);
-    final inputFillColor = isDarkMode ? const Color(0xFF2C2C2C) : const Color(0xFFF5F5F5);
-    final borderColor = isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300;
+    final cardColor = isDarkMode
+        ? const Color(0xFF1E1E1E).withOpacity(0.9)
+        : Colors.white.withOpacity(0.9);
+    final inputFillColor =
+        isDarkMode ? const Color(0xFF2C2C2C) : const Color(0xFFF5F5F5);
+    final borderColor =
+        isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300;
     final hintColor = isDarkMode ? Colors.grey.shade500 : Colors.grey.shade400;
 
     return Scaffold(
@@ -43,7 +48,9 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
               'assets/images/onboarding_2.png',
               fit: BoxFit.cover,
               // Darken image in dark mode, lighten in light mode
-              color: isDarkMode ? Colors.black.withOpacity(0.7) : Colors.white.withOpacity(0.2),
+              color: isDarkMode
+                  ? Colors.black.withOpacity(0.7)
+                  : Colors.white.withOpacity(0.2),
               colorBlendMode: isDarkMode ? BlendMode.darken : BlendMode.dstATop,
             ),
           ),
@@ -54,7 +61,8 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
               children: [
                 // Custom AppBar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   child: Row(
                     children: [
                       IconButton(
@@ -82,7 +90,8 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
                 // 3. The Form Card
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 24),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                   decoration: BoxDecoration(
                     color: cardColor,
                     borderRadius: BorderRadius.circular(24),
@@ -112,15 +121,18 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
                         const SizedBox(height: 24),
 
                         _buildLabel("Machine Type", textColor),
-                        _buildTextField("Ex: CNC Lathe", _typeController, inputFillColor, borderColor, hintColor, textColor),
+                        _buildTextField("Ex: CNC Lathe", _typeController,
+                            inputFillColor, borderColor, hintColor, textColor),
                         const SizedBox(height: 16),
 
                         _buildLabel("Machine Name / Model", textColor),
-                        _buildTextField("Ex: XJ-2000", _nameController, inputFillColor, borderColor, hintColor, textColor),
+                        _buildTextField("Ex: XJ-2000", _nameController,
+                            inputFillColor, borderColor, hintColor, textColor),
                         const SizedBox(height: 16),
 
                         _buildLabel("Machine ID", textColor),
-                        _buildTextField("Ex: #88421", _idController, inputFillColor, borderColor, hintColor, textColor),
+                        _buildTextField("Ex: #88421", _idController,
+                            inputFillColor, borderColor, hintColor, textColor),
 
                         const SizedBox(height: 32),
 
@@ -132,18 +144,52 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
                               final type = _typeController.text;
                               final name = _nameController.text;
                               final id = _idController.text;
-                              print("Adding Machine: $type, $name, $id");
+                              // Optionally validate inputs (simple non-empty check)
+                              if (type.isEmpty || name.isEmpty || id.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Please fill all fields')),
+                                );
+                                return;
+                              }
+
+                              // Show success dialog with a button to return to Home
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (ctx) {
+                                  return AlertDialog(
+                                    title: const Text('Done'),
+                                    content: const Text(
+                                        'Machine added successfully.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(ctx).pop();
+                                          // Go to Home and clear back stack
+                                          Navigator.pushNamedAndRemoveUntil(
+                                              context,
+                                              '/home',
+                                              (route) => false);
+                                        },
+                                        child: const Text('Go to Home'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryOrange,
-                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 32, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               elevation: 0,
                             ),
                             child: const Text(
-                              "Next",
+                              "Add",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -180,14 +226,8 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
     );
   }
 
-  Widget _buildTextField(
-      String hint,
-      TextEditingController controller,
-      Color fillColor,
-      Color borderColor,
-      Color hintColor,
-      Color textColor
-      ) {
+  Widget _buildTextField(String hint, TextEditingController controller,
+      Color fillColor, Color borderColor, Color hintColor, Color textColor) {
     return Container(
       decoration: BoxDecoration(
         color: fillColor,
@@ -201,7 +241,8 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
           hintText: hint,
           hintStyle: TextStyle(color: hintColor),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
       ),
     );
