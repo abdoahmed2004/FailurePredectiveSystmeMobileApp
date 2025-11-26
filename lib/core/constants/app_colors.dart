@@ -4,13 +4,18 @@ class AppColors {
   AppColors._();
 
   // Gradient Colors
-  static const Color splashGradientStart = Color(0xFFD988A4);
+  static const Color splashGradientStart = Color(0xFFD9884A);
   static const Color splashGradientEnd = Color(0xFF4A4E9D);
 
-  // --- ADD THIS LINE ---
-  // From the onboarding button and dots
+  // Onboarding & Primary
   static const Color primaryOrange = Color(0xFFF37A24);
-  // --- END OF ADDITION ---
+
+  // --- NEW COLORS FOR PROFILE SCREENS ---
+  static const Color lightOrange = Color(0xFFFFF2E6); // Background for icons
+  static const Color iconOrange = Color(0xFFF37A24);  // Icon color
+  static const Color textGrey = Color(0xFF888888);    // Subtitle text
+  static const Color redAlert = Color(0xFFE53935);    // Warning icons
+  // --------------------------------------
 
   // App-wide colors
   static const Color appBlack = Colors.black;
