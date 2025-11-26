@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fpms_app/Screens/Forget_password_screen.dart';
 import 'package:fpms_app/Screens/check_email_screen.dart';
 import 'package:fpms_app/Screens/password_changed_success_screen.dart';
+import 'package:fpms_app/Screens/profile_screen.dart';
 import 'package:fpms_app/Screens/reset_password_screen.dart';
 import 'package:fpms_app/core/constants/app_colors.dart';
 
@@ -31,7 +32,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      initialRoute: '/', // <-- SET INITIAL ROUTE HERE
+      initialRoute: '/profile', // <-- SET INITIAL ROUTE HERE
 
       routes: {
         '/': (context) => const SplashScreen(),
@@ -42,6 +43,17 @@ class MyApp extends StatelessWidget {
         '/check-email': (context) => CheckEmailScreen(email: ModalRoute.of(context)!.settings.arguments as String),
         '/reset-password': (context) => const ResetPasswordScreen(),
         '/password-changed-success': (context) => const PasswordChangedSuccessScreen(),
+        '/profile': (context) => ProfileScreen(
+              name: ModalRoute.of(context)!.settings.arguments != null
+                  ? (ModalRoute.of(context)!.settings.arguments as Map<String, String>)['name']!
+                  : 'User Name',
+              email: ModalRoute.of(context)!.settings.arguments != null
+                  ? (ModalRoute.of(context)!.settings.arguments as Map<String, String>)['email']!
+                  : 'user@example.com',
+              role: ModalRoute.of(context)!.settings.arguments != null
+                  ? (ModalRoute.of(context)!.settings.arguments as Map<String, String>)['role']!
+                  : 'User',
+            ),    
       },
     );
   }
