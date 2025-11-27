@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:fpms_app/Screens/machine_details_page.dart';
 
 class AllMachinesPage extends StatelessWidget {
   const AllMachinesPage({super.key});
@@ -7,7 +8,7 @@ class AllMachinesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      // backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 18.0),
@@ -24,7 +25,7 @@ class AllMachinesPage extends StatelessWidget {
                     children: [
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back, color: Colors.black),
+                        icon: const Icon(Icons.arrow_back),
                         tooltip: 'Back',
                       ),
                       Text(
@@ -32,7 +33,6 @@ class AllMachinesPage extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 24,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black,
                         ),
                       ),
                     ],
@@ -62,7 +62,7 @@ class AllMachinesPage extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      //color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.black12),
                     ),
@@ -104,6 +104,7 @@ class AllMachinesPage extends StatelessWidget {
                   physics: const BouncingScrollPhysics(),
                   children: [
                     machineCard(
+                      context: context,
                       color: const Color(0xFF2E2E2E),
                       status: "Inactive",
                       mc: "MC1",
@@ -115,6 +116,7 @@ class AllMachinesPage extends StatelessWidget {
                     ),
 
                     machineCard(
+                      context: context,
                       color: const Color(0xFF0057FF),
                       status: "Active",
                       mc: "MC2",
@@ -126,6 +128,7 @@ class AllMachinesPage extends StatelessWidget {
                     ),
 
                     machineCard(
+                      context: context,
                       color: const Color(0xFF2E2E2E),
                       status: "Under Maintenance",
                       mc: "MC3",
@@ -138,6 +141,7 @@ class AllMachinesPage extends StatelessWidget {
 
                     // -------- Add More Machines (4 to 9) --------
                     machineCard(
+                      context: context,
                       color: const Color(0xFF2E2E2E),
                       status: "Inactive",
                       mc: "MC4",
@@ -149,6 +153,7 @@ class AllMachinesPage extends StatelessWidget {
                     ),
 
                     machineCard(
+                      context: context,
                       color: const Color(0xFF0080FF),
                       status: "Active",
                       mc: "MC5",
@@ -160,6 +165,7 @@ class AllMachinesPage extends StatelessWidget {
                     ),
 
                     machineCard(
+                      context: context,
                       color: const Color(0xFF2E2E2E),
                       status: "Under Maintenance",
                       mc: "MC6",
@@ -171,6 +177,7 @@ class AllMachinesPage extends StatelessWidget {
                     ),
 
                     machineCard(
+                      context: context,
                       color: const Color(0xFF7A00FF),
                       status: "Active",
                       mc: "MC7",
@@ -182,6 +189,7 @@ class AllMachinesPage extends StatelessWidget {
                     ),
 
                     machineCard(
+                      context: context,
                       color: const Color(0xFF2E2E2E),
                       status: "Inactive",
                       mc: "MC8",
@@ -193,6 +201,7 @@ class AllMachinesPage extends StatelessWidget {
                     ),
 
                     machineCard(
+                      context: context,
                       color: const Color(0xFFFF6400),
                       status: "Active",
                       mc: "MC9",
@@ -212,10 +221,8 @@ class AllMachinesPage extends StatelessWidget {
     );
   }
 
-  // -------------------------------------------
-  // MACHINE CARD WIDGET (Reusable)
-  // -------------------------------------------
   Widget machineCard({
+    required BuildContext context,
     required Color color,
     required String status,
     required String mc,
@@ -298,17 +305,28 @@ class AllMachinesPage extends StatelessWidget {
           // Arrow Button
           Align(
             alignment: Alignment.bottomRight,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                shape: BoxShape.circle,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(24),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => MachineDetailsPage(machineName: mc),
+                  ),
+                );
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                padding: const EdgeInsets.all(6),
+                child: const Icon(Icons.arrow_forward, color: Colors.white),
               ),
-              padding: const EdgeInsets.all(6),
-              child: const Icon(Icons.arrow_forward, color: Colors.white),
             ),
           )
         ],
       ),
     );
   }
-}
+  }
+

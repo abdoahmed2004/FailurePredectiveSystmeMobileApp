@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fpms_app/Screens/machine_details_page.dart';
 import 'package:fpms_app/core/constants/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fpms_app/Screens/add_machine_screen.dart';
@@ -10,6 +11,7 @@ import 'package:fpms_app/Screens/Register_screen.dart';
 import 'package:fpms_app/Screens/home_page.dart';
 import 'package:fpms_app/Screens/allmachines_page.dart';
 import 'package:fpms_app/Screens/add_machine_screen.dart';
+import 'package:fpms_app/Screens/machine_details_page.dart';
 import 'package:fpms_app/Screens/Forget_password_screen.dart';
 import 'package:fpms_app/Screens/check_email_screen.dart';
 import 'package:fpms_app/Screens/reset_password_screen.dart';
@@ -32,16 +34,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Machinify',
-
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: AppColors.appBlack,
         primaryColor: AppColors.appWhite,
         useMaterial3: true,
         textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
       ),
-
-      initialRoute: '/login',
-
+      initialRoute: '/machines',
       routes: {
         '/': (context) => const SplashScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
@@ -58,12 +57,14 @@ class MyApp extends StatelessWidget {
         '/check-email': (context) => CheckEmailScreen(
             email: ModalRoute.of(context)!.settings.arguments as String),
         '/reset-password': (context) => const ResetPasswordScreen(),
-        '/password-changed-success': (context) => const PasswordChangedSuccessScreen(),
+        '/password-changed-success': (context) =>
+            const PasswordChangedSuccessScreen(),
 
         // --- PROFILE ROUTES ---
         '/profile': (context) {
           // Safely extract arguments if they exist
-          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          final args = ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>?;
 
           return ProfileScreen(
             name: args?['name'] ?? 'User Name',
@@ -78,6 +79,7 @@ class MyApp extends StatelessWidget {
         },
         '/edit-profile': (context) => const EditProfileScreen(),
         '/change-password': (context) => const ChangePasswordScreen(),
+       
       },
     );
   }
