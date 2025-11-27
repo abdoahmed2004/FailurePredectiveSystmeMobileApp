@@ -8,7 +8,7 @@ class AllMachinesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: Colors.white,
+      
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 18.0),
@@ -74,7 +74,7 @@ class AllMachinesPage extends StatelessWidget {
                         Text("Factory 1",
                             style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.w500,
-                                color: Colors.black)),
+                                )),
                       ],
                     ),
                   ),
@@ -83,14 +83,14 @@ class AllMachinesPage extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                    
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.black12),
                     ),
                     child: Text(
                       "10 Machines",
                       style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500, color: Colors.black),
+                          fontWeight: FontWeight.w500),
                     ),
                   ),
                 ],
