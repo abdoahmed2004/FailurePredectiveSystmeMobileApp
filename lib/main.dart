@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fpms_app/Screens/machine_details_page.dart';
 import 'package:fpms_app/core/constants/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fpms_app/Screens/add_machine_screen.dart';
@@ -10,8 +9,6 @@ import 'package:fpms_app/Screens/Login_screen.dart';
 import 'package:fpms_app/Screens/Register_screen.dart';
 import 'package:fpms_app/Screens/home_page.dart';
 import 'package:fpms_app/Screens/allmachines_page.dart';
-import 'package:fpms_app/Screens/add_machine_screen.dart';
-import 'package:fpms_app/Screens/machine_details_page.dart';
 import 'package:fpms_app/Screens/Forget_password_screen.dart';
 import 'package:fpms_app/Screens/check_email_screen.dart';
 import 'package:fpms_app/Screens/reset_password_screen.dart';
@@ -40,7 +37,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
       ),
-      initialRoute: '/machines',
+      initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
@@ -67,13 +64,8 @@ class MyApp extends StatelessWidget {
               as Map<String, dynamic>?;
 
           return ProfileScreen(
-            name: args?['name'] ?? 'User Name',
-            email: args?['email'] ?? 'user@example.com',
-            role: args?['role'] ?? 'User',
-            // === FIX IS HERE ===
-            // We provide default values because this standalone route
-            // isn't connected to the Home Page's state.
-            isDarkMode: true,
+            // ProfileScreen now loads user data from API
+            isDarkMode: args?['isDarkMode'] ?? true,
             onThemeChanged: (value) {},
           );
         },

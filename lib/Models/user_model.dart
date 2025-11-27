@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 // A wrapper to hold the full response (token + user data + message)
 class AuthResponse {
   final String token;

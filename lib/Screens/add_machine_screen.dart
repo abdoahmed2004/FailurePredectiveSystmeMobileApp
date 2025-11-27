@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fpms_app/core/constants/app_colors.dart';
+import '../Services/auth_service.dart';
 
 class AddMachineScreen extends StatefulWidget {
   const AddMachineScreen({super.key});
@@ -12,6 +13,8 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
   final _typeController = TextEditingController();
   final _nameController = TextEditingController();
   final _idController = TextEditingController();
+  final _authService = AuthService();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -19,6 +22,77 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
     _nameController.dispose();
     _idController.dispose();
     super.dispose();
+  }
+
+  Future<void> _addMachine() async {
+    final type = _typeController.text.trim();
+    final name = _nameController.text.trim();
+    final id = _idController.text.trim();
+
+    // Validate inputs
+    if (type.isEmpty || name.isEmpty || id.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await _authService.addMachine(
+        machineId: id,
+        machineModel: name,
+        machineType: type,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        // Show success dialog
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) {
+            return AlertDialog(
+              title: const Text('Success'),
+              content: Text(response.message),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    // Clear form and go back or to home
+                    _typeController.clear();
+                    _nameController.clear();
+                    _idController.clear();
+                    Navigator.pushNamedAndRemoveUntil(
+                        context, '/home', (route) => false);
+                  },
+                  child: const Text('Go to Home'),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -136,49 +210,11 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
 
                         const SizedBox(height: 32),
 
-                        // Next Button
+                        // Add Button
                         Align(
                           alignment: Alignment.centerRight,
                           child: ElevatedButton(
-                            onPressed: () {
-                              final type = _typeController.text;
-                              final name = _nameController.text;
-                              final id = _idController.text;
-                              // Optionally validate inputs (simple non-empty check)
-                              if (type.isEmpty || name.isEmpty || id.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Please fill all fields')),
-                                );
-                                return;
-                              }
-
-                              // Show success dialog with a button to return to Home
-                              showDialog(
-                                context: context,
-                                barrierDismissible: false,
-                                builder: (ctx) {
-                                  return AlertDialog(
-                                    title: const Text('Done'),
-                                    content: const Text(
-                                        'Machine added successfully.'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(ctx).pop();
-                                          // Go to Home and clear back stack
-                                          Navigator.pushNamedAndRemoveUntil(
-                                              context,
-                                              '/home',
-                                              (route) => false);
-                                        },
-                                        child: const Text('Go to Home'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            },
+                            onPressed: _isLoading ? null : _addMachine,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryOrange,
                               padding: const EdgeInsets.symmetric(
@@ -188,14 +224,23 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
                               ),
                               elevation: 0,
                             ),
-                            child: const Text(
-                              "Add",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : const Text(
+                                    "Add",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
                           ),
                         ),
                       ],
