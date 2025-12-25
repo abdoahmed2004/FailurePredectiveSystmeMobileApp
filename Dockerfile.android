@@ -1,0 +1,69 @@
+# ================================================
+# Dockerfile for Flutter Android APK Build (CI/CD)
+# ================================================
+# Use this for building Android APKs in CI/CD pipelines
+# ================================================
+
+FROM ubuntu:22.04
+
+# Avoid prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    unzip \
+    xz-utils \
+    zip \
+    libglu1-mesa \
+    openjdk-17-jdk \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Java environment
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH=$JAVA_HOME/bin:$PATH
+
+# Install Android SDK
+ENV ANDROID_HOME=/opt/android-sdk
+ENV ANDROID_SDK_ROOT=$ANDROID_HOME
+ENV PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+
+RUN mkdir -p $ANDROID_HOME/cmdline-tools && \
+    cd $ANDROID_HOME/cmdline-tools && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O tools.zip && \
+    unzip -q tools.zip && \
+    rm tools.zip && \
+    mv cmdline-tools latest
+
+# Accept licenses and install SDK packages
+RUN yes | sdkmanager --licenses && \
+    sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+# Install Flutter
+ENV FLUTTER_HOME=/opt/flutter
+ENV PATH=$FLUTTER_HOME/bin:$PATH
+
+RUN git clone --depth 1 --branch stable https://github.com/flutter/flutter.git $FLUTTER_HOME
+
+# Verify installations
+RUN flutter doctor -v
+
+# Set working directory
+WORKDIR /app
+
+# Copy pubspec files first (for caching)
+COPY pubspec.yaml pubspec.lock* ./
+
+# Get dependencies
+RUN flutter pub get
+
+# Copy source code
+COPY . .
+
+# Build APK
+RUN flutter build apk --release
+
+# The APK will be at /app/build/app/outputs/flutter-apk/app-release.apk
+# You can copy it out using docker cp or mount a volume

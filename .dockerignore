@@ -1,0 +1,52 @@
+# Docker ignore file for Flutter project
+
+# Build outputs (will be regenerated in container)
+build/
+.dart_tool/
+.packages
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Test files
+test/
+*_test.dart
+
+# Documentation
+*.md
+!README.md
+
+# Android build artifacts
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+
+# iOS build artifacts
+ios/.symlinks/
+ios/Pods/
+ios/build/
+
+# Windows/Linux/macOS build artifacts
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/
+macos/Flutter/ephemeral/
+
+# Logs
+*.log
+
+# Other
+.env
+.env.local
+*.lock
+!pubspec.lock

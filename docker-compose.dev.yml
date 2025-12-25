@@ -1,0 +1,51 @@
+# ================================================
+# Docker Compose for Development Environment
+# ================================================
+# Use this for local development with hot reload
+# ================================================
+
+version: '3.8'
+
+services:
+  # ================================
+  # Development Server (optional)
+  # ================================
+  # For running flutter web in development mode
+  # Note: Hot reload works better with native Flutter CLI
+  flutter-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: fpms-flutter-dev
+    ports:
+      - "8080:8080"      # Web server port
+      - "9100-9150:9100-9150"  # Debug ports
+    volumes:
+      - .:/app
+      - flutter-pub-cache:/root/.pub-cache
+    command: flutter run -d web-server --web-port 8080 --web-hostname 0.0.0.0
+    networks:
+      - fpms-dev-network
+
+  # ================================
+  # Mock Backend for Development
+  # ================================
+  mock-backend:
+    image: node:20-alpine
+    container_name: fpms-mock-backend
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./mock-server:/app
+    command: sh -c "npm install && npm start"
+    networks:
+      - fpms-dev-network
+
+networks:
+  fpms-dev-network:
+    driver: bridge
+
+volumes:
+  flutter-pub-cache:
+    driver: local

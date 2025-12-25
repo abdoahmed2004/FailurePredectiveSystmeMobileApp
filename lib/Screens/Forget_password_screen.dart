@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 // --- ADDED IMPORTS ---
 import '../Services/auth_service.dart';
 // Note: We don't need a token screen, but we do need a Confirmation screen
-import 'check_Email_Screen.dart'; 
+import 'check_email_screen.dart';
 // ---------------------
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -29,7 +29,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.red : const Color(0xFFFF9800), // Amber for success
+        backgroundColor:
+            isError ? Colors.red : const Color(0xFFFF9800), // Amber for success
         duration: const Duration(seconds: 5),
       ),
     );
@@ -42,11 +43,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _showSnackbar("Please enter your email address", isError: true);
       return;
     }
-    
+
     // Optional: Simple email format validation
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
-       _showSnackbar("Please enter a valid email address.", isError: true);
-       return;
+      _showSnackbar("Please enter a valid email address.", isError: true);
+      return;
     }
 
     setState(() {
@@ -56,20 +57,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     try {
       // 1. Call the backend API to initiate the password reset process
       await AuthService().forgotPassword(email: email);
-      
+
       // 2. If the API call succeeds (Status 200), navigate to the confirmation screen.
       // The backend returns a generic success message to prevent user enumeration,
       // so we navigate immediately and let the user check their email.
-      
+
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => CheckEmailScreen(email: email), // Use CheckEmailScreen for confirmation
+          builder: (context) => CheckEmailScreen(
+              email: email), // Use CheckEmailScreen for confirmation
         ),
       );
-
     } catch (e) {
       // 3. Show error if network fails or the API returns a non-200 status
-      _showSnackbar("Failed: ${e.toString().replaceAll('Exception: ', '')}", isError: true);
+      _showSnackbar("Failed: ${e.toString().replaceAll('Exception: ', '')}",
+          isError: true);
     } finally {
       setState(() {
         _isLoading = false;
@@ -119,19 +121,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 // 📧 Email Field
                 TextField(
                   controller: emailController,
-                  keyboardType: TextInputType.emailAddress, // Added keyboard type
+                  keyboardType:
+                      TextInputType.emailAddress, // Added keyboard type
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    prefixIcon:
-                        const Icon(Icons.email_outlined, color: Color(0xFFFF9800)),
+                    prefixIcon: const Icon(Icons.email_outlined,
+                        color: Color(0xFFFF9800)),
                     hintText: 'Email',
                     hintStyle: GoogleFonts.poppins(color: Colors.white54),
                     filled: true,
                     fillColor: const Color(0xFF121212),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: Color(0xFFFF9800)),
+                      borderSide: const BorderSide(color: Color(0xFFFF9800)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -156,20 +158,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: _isLoading ? null : _handleSendLink, // Call API integration
-                    child: _isLoading 
-                      ? const Center(child: SizedBox(
-                          height: 20, width: 20, 
-                          child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
-                        ))
-                      : Text(
-                          "Send Reset Link",
-                          style: GoogleFonts.poppins(
-                            color: Colors.black,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                    onPressed: _isLoading
+                        ? null
+                        : _handleSendLink, // Call API integration
+                    child: _isLoading
+                        ? const Center(
+                            child: SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                                color: Colors.black, strokeWidth: 2),
+                          ))
+                        : Text(
+                            "Send Reset Link",
+                            style: GoogleFonts.poppins(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
                   ),
                 ),
 

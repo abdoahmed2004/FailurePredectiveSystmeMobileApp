@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'login_screen.dart'; 
+import 'Login_screen.dart';
 
 class CheckEmailScreen extends StatefulWidget {
-  final String email; 
+  final String email;
   final bool isPasswordReset; // <-- NEW FLAG for context
 
   const CheckEmailScreen({
-    super.key, 
-    required this.email, 
+    super.key,
+    required this.email,
     this.isPasswordReset = false, // Defaults to false (Registration)
-  }); 
+  });
 
   @override
   State<CheckEmailScreen> createState() => _CheckEmailScreenState();
@@ -29,13 +29,15 @@ class _CheckEmailScreenState extends State<CheckEmailScreen> {
     );
   }
 
-  // NOTE: This logic is currently set for email VERIFICATION RESEND, 
-  // not password reset resend, as the password reset link is time-sensitive 
+  // NOTE: This logic is currently set for email VERIFICATION RESEND,
+  // not password reset resend, as the password reset link is time-sensitive
   // and the entire process must be restarted. We keep the button for UX flow.
   void _handleResend() async {
     // Only allow resending if it's the REGISTRATION flow
     if (widget.isPasswordReset) {
-      _showSnackbar("Please use the 'Forgot Password' button on the Login screen to restart the reset process.", isError: true);
+      _showSnackbar(
+          "Please use the 'Forgot Password' button on the Login screen to restart the reset process.",
+          isError: true);
       return;
     }
 
@@ -46,9 +48,10 @@ class _CheckEmailScreenState extends State<CheckEmailScreen> {
     try {
       // NOTE: This call assumes a 'resendVerificationEmail' route exists on the backend.
       // Since we don't have that, we mock success for the verification path.
-      await Future.delayed(const Duration(seconds: 1)); 
+      await Future.delayed(const Duration(seconds: 1));
 
-      _showSnackbar("New verification email sent successfully!", isError: false);
+      _showSnackbar("New verification email sent successfully!",
+          isError: false);
     } catch (e) {
       _showSnackbar("Resend Failed: Server Error", isError: true);
     } finally {
@@ -61,8 +64,9 @@ class _CheckEmailScreenState extends State<CheckEmailScreen> {
   @override
   Widget build(BuildContext context) {
     // Determine the descriptive text based on the flag
-    final String titleText = widget.isPasswordReset ? "Reset Link Sent" : "Check Your Email";
-    final String descriptionText = widget.isPasswordReset 
+    final String titleText =
+        widget.isPasswordReset ? "Reset Link Sent" : "Check Your Email";
+    final String descriptionText = widget.isPasswordReset
         ? "We’ve sent a password reset link to ${widget.email}. Please click the link to set your new password in your browser."
         : "We’ve sent a verification link to ${widget.email}.\nPlease check your inbox and follow the instructions.";
 
@@ -72,7 +76,7 @@ class _CheckEmailScreenState extends State<CheckEmailScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch, 
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 80),
 
@@ -83,7 +87,8 @@ class _CheckEmailScreenState extends State<CheckEmailScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFF1A1A1A),
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFFF9800), width: 2),
+                    border:
+                        Border.all(color: const Color(0xFFFF9800), width: 2),
                   ),
                   child: const Icon(
                     Icons.email_outlined,
@@ -125,22 +130,29 @@ class _CheckEmailScreenState extends State<CheckEmailScreen> {
                 height: 50,
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFFF9800), width: 1.5),
+                    side:
+                        const BorderSide(color: Color(0xFFFF9800), width: 1.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   // Disable if it's the password reset flow
-                  onPressed: widget.isPasswordReset ? null : (_isResending ? null : _handleResend), 
-                  child: _isResending 
+                  onPressed: widget.isPasswordReset
+                      ? null
+                      : (_isResending ? null : _handleResend),
+                  child: _isResending
                       ? const SizedBox(
-                          height: 20, width: 20, 
-                          child: CircularProgressIndicator(color: Color(0xFFFF9800), strokeWidth: 2),
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                              color: Color(0xFFFF9800), strokeWidth: 2),
                         )
                       : Text(
                           "Resend",
                           style: GoogleFonts.poppins(
-                            color: widget.isPasswordReset ? Colors.white54 : const Color(0xFFFF9800),
+                            color: widget.isPasswordReset
+                                ? Colors.white54
+                                : const Color(0xFFFF9800),
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                           ),
@@ -163,10 +175,10 @@ class _CheckEmailScreenState extends State<CheckEmailScreen> {
                   onPressed: () {
                     // Navigate back to the Login Screen, removing all previous routes
                     Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (context) => const LoginScreen(),
-                        ),
-                        (Route<dynamic> route) => false, 
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
+                      (Route<dynamic> route) => false,
                     );
                   },
                   child: Text(

@@ -103,7 +103,11 @@ class _AllMachinesPageState extends State<AllMachinesPage> {
               const SizedBox(height: 12),
 
               // ---------- Factory Row ----------
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.start,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Container(
                     padding:
@@ -125,12 +129,10 @@ class _AllMachinesPageState extends State<AllMachinesPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                    
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.black12),
                     ),
@@ -141,7 +143,6 @@ class _AllMachinesPageState extends State<AllMachinesPage> {
                     ),
                   ),
                   if (_machines.isNotEmpty) ...[
-                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
@@ -164,7 +165,6 @@ class _AllMachinesPageState extends State<AllMachinesPage> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(

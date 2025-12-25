@@ -1,0 +1,69 @@
+# ================================================
+# Docker Compose for FPMS Mobile App
+# ================================================
+# This file orchestrates the Flutter web app
+# and can include backend services
+# ================================================
+
+version: '3.8'
+
+services:
+  # ================================
+  # Flutter Web App
+  # ================================
+  fpms-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fpms-web-app
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    environment:
+      - API_BASE_URL=http://fpms-backend:3000/api
+    depends_on:
+      - fpms-backend
+    networks:
+      - fpms-network
+
+  # ================================
+  # Backend API (Example - Node.js)
+  # ================================
+  # Uncomment if you have a backend service
+  fpms-backend:
+    image: node:20-alpine
+    container_name: fpms-backend
+    working_dir: /app
+    # volumes:
+    #   - ../backend:/app  # Mount your backend folder
+    ports:
+      - "3000:3000"
+    # command: npm start
+    networks:
+      - fpms-network
+    # environment:
+    #   - NODE_ENV=production
+    #   - DATABASE_URL=mongodb://fpms-db:27017/fpms
+
+  # ================================
+  # Database (Example - MongoDB)
+  # ================================
+  # fpms-db:
+  #   image: mongo:7
+  #   container_name: fpms-database
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - fpms-db-data:/data/db
+  #   networks:
+  #     - fpms-network
+  #   environment:
+  #     - MONGO_INITDB_DATABASE=fpms
+
+networks:
+  fpms-network:
+    driver: bridge
+
+volumes:
+  fpms-db-data:
+    driver: local
