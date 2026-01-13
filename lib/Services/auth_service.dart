@@ -323,6 +323,50 @@ Future<String> forgotPassword({required String email}) async {
     }
   }
 
+  // Get all technician users (endpoint: /alltechusers)
+  Future<List<User>> getTechnicians() async {
+    final url = Uri.parse('$baseUrl/alltechusers');
+
+    try {
+      final headers = _getAuthHeaders();
+      _debugRequest('GET', url, null, headers);
+      final response = await http.get(url, headers: headers).timeout(requestTimeout);
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        List<dynamic> usersJson;
+        if (jsonResponse is List) {
+          usersJson = jsonResponse;
+        } else if (jsonResponse['users'] != null) {
+          usersJson = jsonResponse['users'];
+        } else {
+          throw Exception('Unexpected response format when fetching technicians');
+        }
+
+        return usersJson.map((u) => User.fromJson(u)).toList();
+      } else if (response.statusCode == 401) {
+        throw Exception('Authentication failed. Please log in again.');
+      } else {
+        String errorMessage;
+        try {
+          final errorBody = jsonDecode(response.body);
+          errorMessage = errorBody['message'] ?? 'Failed to fetch technicians.';
+        } catch (e) {
+          errorMessage = 'Server returned: ${response.body}';
+        }
+        throw Exception('HTTP ${response.statusCode}: $errorMessage');
+      }
+    } on TimeoutException {
+      throw Exception('Request timed out. Please check your network and try again.');
+    } on SocketException {
+      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
   // Get machine by ID
   Future<Machine> getMachineById(String machineId) async {
     if (!isAuthenticated()) {
@@ -508,6 +552,82 @@ Future<String> forgotPassword({required String email}) async {
     } catch (e) {
       // Clear token on any error to ensure user is logged out locally
       clearAuthToken();
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  // Create a new failure report
+  Future<String> createFailureReport({
+    required String machineName,
+    required String machineType,
+    required String machineId,
+    required String description,
+    required String assignedTo, // user id
+    required String severity, // low | medium | critical
+    required String assignedBy, // current user id
+  }) async {
+    if (!isAuthenticated()) {
+      throw Exception('User not authenticated. Please log in first.');
+    }
+
+    final url = Uri.parse('$baseUrl/failures');
+    final failureId = 'FAIL-${DateTime.now().millisecondsSinceEpoch}';
+    final payload = {
+      // Backend expects machineId lowercase for Machines.findById
+      'machineId': machineId,
+
+      // Duplicate common fields in both cases to be safe with schema
+      'machineName': machineName,
+      'MachineName': machineName,
+      'machineType': machineType,
+      'MachineType': machineType,
+
+      // Required fields per validation error (capitalized)
+      'Description': description,
+      'AssignedTo': assignedTo,
+      'ReportedBy': assignedBy,
+      'failureId': failureId,
+
+      // Severity (send both just in case)
+      'severity': severity,
+      'Severity': severity,
+    };
+    final body = jsonEncode(payload);
+
+    try {
+      final headers = _getAuthHeaders();
+      _debugRequest('POST', url, body, headers);
+      final response = await http.post(url, headers: headers, body: body).timeout(requestTimeout);
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return jsonResponse['message'] ?? 'Failure created successfully';
+      } else if (response.statusCode == 404) {
+        final errorBody = jsonDecode(response.body);
+        throw Exception(errorBody['message'] ?? 'Machine not found');
+      } else if (response.statusCode == 400) {
+        final errorBody = jsonDecode(response.body);
+        throw Exception(errorBody['message'] ?? 'Invalid failure data');
+      } else if (response.statusCode == 401) {
+        throw Exception('Authentication failed. Please log in again.');
+      } else {
+        String errorMessage;
+        try {
+          final errorBody = jsonDecode(response.body);
+          errorMessage = errorBody['message'] ?? 'Failed to create failure.';
+        } catch (_) {
+          errorMessage = 'Server returned: ${response.body}';
+        }
+        throw Exception('HTTP ${response.statusCode}: $errorMessage');
+      }
+    } on TimeoutException {
+      throw Exception('Request timed out. Please check your network and try again.');
+    } on SocketException {
+      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+    } catch (e) {
       throw Exception('Unexpected error: $e');
     }
   }

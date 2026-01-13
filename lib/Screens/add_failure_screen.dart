@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../Services/auth_service.dart';
+import '../Models/user_model.dart';
+import '../Models/machine_model.dart';
 
 class AddFailureScreen extends StatefulWidget {
   const AddFailureScreen({super.key});
@@ -12,28 +15,32 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
   // Form controllers
   final TextEditingController _machineNameController = TextEditingController();
   final TextEditingController _machineTypeController = TextEditingController();
-  final TextEditingController _machineIdController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
   // Form values
   String? _selectedAssignee;
+  String? _selectedMachineId; // Mongo ObjectId for machine
   double _severityLevel = 1.0; // 0=Low, 1=Normal, 2=Critical
   bool _isLoading = false;
+  bool _isLoadingAssignees = false;
+  bool _isLoadingMachines = false;
 
-  // Sample assignees - replace with backend data
-  final List<String> _assignees = [
-    'Ali Ahmed',
-    'Sara Mohamed',
-    'Ahmed Hassan',
-    'Fatima Ali',
-    'Omar Khaled',
-  ];
+  // Technicians fetched from backend
+  List<User> _technicians = [];
+  // Machines fetched from backend
+  List<Machine> _machines = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTechnicians();
+    _loadMachines();
+  }
 
   @override
   void dispose() {
     _machineNameController.dispose();
     _machineTypeController.dispose();
-    _machineIdController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -51,6 +58,19 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
     return 'Critical';
   }
 
+  String _mapSeverityForApi() {
+    if (_severityLevel <= 0.5) return 'low';
+    if (_severityLevel <= 1.5) return 'medium';
+    return 'critical';
+  }
+
+  String _resolveMachineIdForApi() {
+    if (_selectedMachineId != null && _selectedMachineId!.isNotEmpty) {
+      return _selectedMachineId!;
+    }
+    throw Exception('Please select a machine.');
+  }
+
   Color _getSeverityColor() {
     if (_severityLevel <= 0.5) return Colors.green;
     if (_severityLevel <= 1.5) return Colors.orange;
@@ -61,7 +81,7 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
     // Validation
     if (_machineNameController.text.isEmpty ||
         _machineTypeController.text.isEmpty ||
-        _machineIdController.text.isEmpty ||
+        _selectedMachineId == null ||
         _descriptionController.text.isEmpty ||
         _selectedAssignee == null) {
       _showSnackbar('Please fill all fields', isError: true);
@@ -71,24 +91,21 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Replace with actual API call
-      // Example:
-      // await FailureService().reportFailure(
-      //   machineName: _machineNameController.text,
-      //   machineType: _machineTypeController.text,
-      //   machineId: _machineIdController.text,
-      //   description: _descriptionController.text,
-      //   assignedTo: _selectedAssignee!,
-      //   severity: _getSeverityText().toLowerCase(),
-      // );
+      final me = await AuthService().getPersonalInfo();
+      final resolvedMachineId = _resolveMachineIdForApi();
+      final message = await AuthService().createFailureReport(
+        machineName: _machineNameController.text.trim(),
+        machineType: _machineTypeController.text.trim(),
+        machineId: resolvedMachineId,
+        description: _descriptionController.text.trim(),
+        assignedTo: _selectedAssignee!,
+        severity: _mapSeverityForApi(),
+        assignedBy: me.id,
+      );
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
+      _showSnackbar(message, isError: false);
 
-      _showSnackbar('Failure reported successfully!', isError: false);
-
-      // Navigate back after short delay
-      await Future.delayed(const Duration(milliseconds: 500));
+      await Future.delayed(const Duration(milliseconds: 300));
       if (mounted) Navigator.pop(context);
     } catch (e) {
       _showSnackbar('Failed to report failure: $e', isError: true);
@@ -105,6 +122,40 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
         duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  Future<void> _loadTechnicians() async {
+    setState(() => _isLoadingAssignees = true);
+    try {
+      final users = await AuthService().getTechnicians();
+      if (!mounted) return;
+      setState(() {
+        _technicians = users.where((u) => u.fullName.isNotEmpty && u.fullName != 'N/A').toList();
+      });
+      // Debug: print loaded technicians
+      debugPrint('Loaded technicians count: ${_technicians.length}');
+      debugPrint('Technicians: ${_technicians.map((e) => '${e.fullName}(${e.id})').join(', ')}');
+    } catch (e) {
+      if (mounted) _showSnackbar('Failed to load assignees: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoadingAssignees = false);
+    }
+  }
+
+  Future<void> _loadMachines() async {
+    setState(() => _isLoadingMachines = true);
+    try {
+      final machines = await AuthService().getAllMachines();
+      if (!mounted) return;
+      setState(() {
+        _machines = machines;
+      });
+      debugPrint('Loaded machines count: ${_machines.length}');
+    } catch (e) {
+      if (mounted) _showSnackbar('Failed to load machines: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoadingMachines = false);
+    }
   }
 
   @override
@@ -180,19 +231,34 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
 
               const SizedBox(height: 16),
 
-              // Machine ID & Description
+              // Machine selection & Description
               Row(
                 children: [
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _machineIdController,
-                      label: 'Machine ID',
-                      textColor: textColor,
-                      textColorLight: textColorLight,
-                      cardBg: cardBg,
-                      borderColor: borderColor,
-                    ),
-                  ),
+                  Expanded(child: _buildMachineDropdown(
+                    value: _selectedMachineId,
+                    label: 'Machine',
+                    items: _machines
+                        .map((m) => DropdownMenuItem<String>(
+                              value: m.id ?? '',
+                              child: Text(
+                                '${m.machineModel} (${m.machineId})',
+                                style: GoogleFonts.poppins(color: textColor, fontSize: 14),
+                              ),
+                            ))
+                        .toList(),
+                    onChanged: (val) {
+                      setState(() {
+                        _selectedMachineId = val;
+                        final machine = _machines.firstWhere((m) => (m.id ?? '') == val, orElse: () => _machines.first);
+                        _machineNameController.text = machine.machineModel;
+                        _machineTypeController.text = machine.machineType;
+                      });
+                    },
+                    textColor: textColor,
+                    textColorLight: textColorLight,
+                    cardBg: cardBg,
+                    borderColor: borderColor,
+                  )),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildTextField(
@@ -208,13 +274,19 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
                 ],
               ),
 
+
               const SizedBox(height: 16),
 
               // Assign To Dropdown
-              _buildDropdown(
+              _buildAssignDropdown(
                 value: _selectedAssignee,
                 label: 'Assign To',
-                items: _assignees,
+                items: _technicians
+                    .map((u) => DropdownMenuItem<String>(
+                          value: u.id,
+                          child: Text(u.fullName, style: GoogleFonts.poppins(color: textColor, fontSize: 14)),
+                        ))
+                    .toList(),
                 onChanged: (value) => setState(() => _selectedAssignee = value),
                 textColor: textColor,
                 textColorLight: textColorLight,
@@ -406,10 +478,10 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
     );
   }
 
-  Widget _buildDropdown({
+  Widget _buildAssignDropdown({
     required String? value,
     required String label,
-    required List<String> items,
+    required List<DropdownMenuItem<String>> items,
     required Function(String?) onChanged,
     required Color textColor,
     required Color textColorLight,
@@ -434,30 +506,101 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: borderColor),
           ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: value,
-              hint: Text(
-                'Select assignee',
-                style: GoogleFonts.poppins(color: textColorLight, fontSize: 14),
-              ),
-              isExpanded: true,
-              icon: Icon(Icons.keyboard_arrow_down, color: textColor),
-              dropdownColor: cardBg,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              borderRadius: BorderRadius.circular(8),
-              items: items.map((String item) {
-                return DropdownMenuItem<String>(
-                  value: item,
-                  child: Text(
-                    item,
-                    style: GoogleFonts.poppins(color: textColor, fontSize: 14),
-                  ),
-                );
-              }).toList(),
-              onChanged: onChanged,
-            ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: _isLoadingAssignees
+              ? const SizedBox(
+                  height: 40,
+                  child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                )
+                : items.isEmpty
+                  ? SizedBox(
+                      height: 48,
+                      child: Center(
+                        child: Text(
+                          'No assignees available',
+                          style: GoogleFonts.poppins(color: textColorLight, fontSize: 14),
+                        ),
+                      ),
+                    )
+                  : DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: value,
+                        hint: Text(
+                          'Select assignee',
+                          style: GoogleFonts.poppins(color: textColorLight, fontSize: 14),
+                        ),
+                        isExpanded: true,
+                        icon: Icon(Icons.keyboard_arrow_down, color: textColor),
+                        dropdownColor: cardBg,
+                        borderRadius: BorderRadius.circular(8),
+                        items: items,
+                        onChanged: onChanged,
+                      ),
+                    ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMachineDropdown({
+    required String? value,
+    required String label,
+    required List<DropdownMenuItem<String>> items,
+    required Function(String?) onChanged,
+    required Color textColor,
+    required Color textColorLight,
+    required Color cardBg,
+    required Color borderColor,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            color: textColorLight,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
           ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: borderColor),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: _isLoadingMachines
+              ? const SizedBox(
+                  height: 40,
+                  child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                )
+              : items.isEmpty
+                  ? SizedBox(
+                      height: 48,
+                      child: Center(
+                        child: Text(
+                          'No machines available',
+                          style: GoogleFonts.poppins(color: textColorLight, fontSize: 14),
+                        ),
+                      ),
+                    )
+                  : DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: value,
+                        hint: Text(
+                          'Select machine',
+                          style: GoogleFonts.poppins(color: textColorLight, fontSize: 14),
+                        ),
+                        isExpanded: true,
+                        icon: Icon(Icons.keyboard_arrow_down, color: textColor),
+                        dropdownColor: cardBg,
+                        borderRadius: BorderRadius.circular(8),
+                        items: items,
+                        onChanged: onChanged,
+                      ),
+                    ),
         ),
       ],
     );

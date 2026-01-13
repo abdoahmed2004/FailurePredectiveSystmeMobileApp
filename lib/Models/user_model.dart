@@ -32,12 +32,23 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    // Robust name resolution across varying backend keys
+    final resolvedName = (
+      json['fullName'] ??
+      json['_fullName'] ??
+      json['FullName'] ??
+      json['fullname'] ??
+      json['name'] ??
+      json['displayName'] ??
+      ''
+    ).toString().trim();
+
     return User(
-      id: json['id'] ?? json['_id'] ?? 'unknown_id', 
-      fullName: json['fullName'] ?? 'N/A',
-      email: json['email'] ?? 'N/A',
-      role: json['role'] ?? 'engineer',
-      isVerified: json['isVerified'] ?? false, 
+      id: json['id']?.toString() ?? json['_id']?.toString() ?? 'unknown_id', 
+      fullName: resolvedName.isNotEmpty ? resolvedName : 'N/A',
+      email: (json['email'] ?? json['Email'] ?? 'N/A').toString(),
+      role: (json['role'] ?? 'engineer').toString(),
+      isVerified: json['isVerified'] == true, 
     );
   }
 }
