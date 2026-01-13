@@ -2,11 +2,15 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 class WeeklyPage extends StatelessWidget {
-  const WeeklyPage({super.key});
+  final bool isDarkMode;
+  const WeeklyPage({super.key, required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
+    final textColor = isDarkMode ? Colors.white : Colors.black;
+    final textColorLight = isDarkMode ? Colors.white54 : Colors.black54;
     return ListView(
       physics: const BouncingScrollPhysics(),
       children: [
@@ -27,15 +31,32 @@ class WeeklyPage extends StatelessWidget {
                 width: 84,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isToday ? const Color(0xFFFF9800) : const Color(0xFF121212),
+                  color: isToday
+                      ? const Color(0xFFFF9800)
+                      : (isDarkMode
+                            ? const Color(0xFF121212)
+                            : Colors.grey[200]),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(day, style: GoogleFonts.poppins(fontSize: 14, color: isToday ? Colors.black : Colors.white70)),
+                    Text(
+                      day,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: isToday ? Colors.black : textColorLight,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    Text("$date", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: isToday ? Colors.black : Colors.white)),
+                    Text(
+                      "$date",
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isToday ? Colors.black : textColor,
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -48,14 +69,26 @@ class WeeklyPage extends StatelessWidget {
         // Weekly fault overview (line + area)
         Container(
           padding: const EdgeInsets.all(14),
-          decoration: _cardDecoration(),
+          decoration: _cardDecoration(isDarkMode),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text("Fault Overview", style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                Text("Weekly", style: GoogleFonts.poppins(color: Colors.white54)),
-              ]),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Fault Overview",
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                  Text(
+                    "Weekly",
+                    style: GoogleFonts.poppins(color: textColorLight),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
               SizedBox(height: 160, child: LineChartPlaceholder()),
             ],
@@ -83,22 +116,43 @@ class WeeklyPage extends StatelessWidget {
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(12),
-              decoration: _cardDecoration(),
+              decoration: _cardDecoration(isDarkMode),
               child: Row(
                 children: [
-                  CircleAvatar(backgroundColor: Colors.white12, child: Text('MC${i + 1}', style: GoogleFonts.poppins(color: Colors.white))),
+                  CircleAvatar(
+                    backgroundColor: isDarkMode
+                        ? Colors.white12
+                        : Colors.grey[300],
+                    child: Text(
+                      'MC${i + 1}',
+                      style: GoogleFonts.poppins(color: textColor),
+                    ),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Machine MC${i + 1}", style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                        Text(
+                          "Machine MC${i + 1}",
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            color: textColor,
+                          ),
+                        ),
                         const SizedBox(height: 6),
-                        Text("Status: ${["Active", "Idle", "Maintenance", "Active"][i]}", style: GoogleFonts.poppins(color: Colors.white54)),
+                        Text(
+                          "Status: ${["Active", "Idle", "Maintenance", "Active"][i]}",
+                          style: GoogleFonts.poppins(color: textColorLight),
+                        ),
                       ],
                     ),
                   ),
-                  SizedBox(width: 100, height: 36, child: LineChartPlaceholder(isMini: true)),
+                  SizedBox(
+                    width: 100,
+                    height: 36,
+                    child: LineChartPlaceholder(isMini: true),
+                  ),
                 ],
               ),
             );
@@ -109,21 +163,30 @@ class WeeklyPage extends StatelessWidget {
   }
 
   Widget _smallChip(String label, Color color) {
+    final textColor = isDarkMode ? Colors.white : Colors.black;
     return Chip(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: isDarkMode ? const Color(0xFF121212) : Colors.grey[200],
       side: BorderSide(color: color.withOpacity(0.4)),
-      label: Text(label, style: GoogleFonts.poppins(color: Colors.white)),
+      label: Text(label, style: GoogleFonts.poppins(color: textColor)),
     );
   }
 }
-BoxDecoration _cardDecoration() {
+
+BoxDecoration _cardDecoration(bool isDarkMode) {
   return BoxDecoration(
-    color: const Color(0xFF121212),
+    color: isDarkMode ? const Color(0xFF121212) : Colors.white,
     borderRadius: BorderRadius.circular(12),
-    border: Border.all(color: Colors.white10),
-    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))],
+    border: Border.all(color: isDarkMode ? Colors.white10 : Colors.grey[300]!),
+    boxShadow: [
+      BoxShadow(
+        color: (isDarkMode ? Colors.black : Colors.grey).withOpacity(0.3),
+        blurRadius: 8,
+        offset: const Offset(0, 4),
+      ),
+    ],
   );
 }
+
 /// Donut placeholder painter (three segments)
 class DonutPainter extends CustomPainter {
   @override
@@ -145,7 +208,13 @@ class DonutPainter extends CustomPainter {
     for (int i = 0; i < angles.length; i++) {
       paint.color = colors[i];
       final sweep = angles[i] / (angles.reduce((a, b) => a + b)) * 2 * pi;
-      canvas.drawArc(Rect.fromCircle(center: center, radius: radius - stroke / 2), start, sweep, false, paint);
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius - stroke / 2),
+        start,
+        sweep,
+        false,
+        paint,
+      );
       start += sweep;
     }
 
@@ -154,8 +223,18 @@ class DonutPainter extends CustomPainter {
     canvas.drawCircle(center, radius - stroke - 6, innerPaint);
 
     // small percentage text (center)
-    final tp = TextPainter(textAlign: TextAlign.center, textDirection: TextDirection.ltr);
-    tp.text = TextSpan(text: '70%', style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold));
+    final tp = TextPainter(
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+    );
+    tp.text = TextSpan(
+      text: '70%',
+      style: GoogleFonts.poppins(
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+      ),
+    );
     tp.layout();
     tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
   }
@@ -171,20 +250,23 @@ class LineChartPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _LinePainter(),
-      child: Container(),
-    );
+    return CustomPaint(painter: _LinePainter(), child: Container());
   }
 }
 
 class _LinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paintGrid = Paint()..color = Colors.white12..strokeWidth = 1;
+    final paintGrid = Paint()
+      ..color = Colors.white12
+      ..strokeWidth = 1;
     final gapY = size.height / 4;
     for (int i = 0; i < 4; i++) {
-      canvas.drawLine(Offset(0, i * gapY), Offset(size.width, i * gapY), paintGrid);
+      canvas.drawLine(
+        Offset(0, i * gapY),
+        Offset(size.width, i * gapY),
+        paintGrid,
+      );
     }
 
     final paint = Paint()
@@ -197,9 +279,16 @@ class _LinePainter extends CustomPainter {
     final rng = Random(42);
     for (int i = 0; i <= 12; i++) {
       final x = size.width * (i / 12);
-      final y = size.height / 2 + sin(i / 12 * 2 * pi) * (size.height / 3) * (0.6 + rng.nextDouble() * 0.6);
-      if (i == 0) path.moveTo(x, y);
-      else path.lineTo(x, y);
+      final y =
+          size.height / 2 +
+          sin(i / 12 * 2 * pi) *
+              (size.height / 3) *
+              (0.6 + rng.nextDouble() * 0.6);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
     }
     canvas.drawPath(path, paint);
 
@@ -207,7 +296,8 @@ class _LinePainter extends CustomPainter {
     final dot = Paint()..color = const Color(0xFFFF9800);
     for (int i = 0; i <= 12; i += 3) {
       final x = size.width * (i / 12);
-      final y = size.height / 2 + sin(i / 12 * 2 * pi) * (size.height / 3) * 0.9;
+      final y =
+          size.height / 2 + sin(i / 12 * 2 * pi) * (size.height / 3) * 0.9;
       canvas.drawCircle(Offset(x, y), 3.8, dot);
     }
   }
@@ -222,10 +312,7 @@ class BarChartPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _BarPainter(),
-      child: Container(),
-    );
+    return CustomPaint(painter: _BarPainter(), child: Container());
   }
 }
 
@@ -246,8 +333,14 @@ class _BarPainter extends CustomPainter {
     }
 
     // baseline
-    final base = Paint()..color = Colors.white12..strokeWidth = 1;
-    canvas.drawLine(Offset(0, size.height), Offset(size.width, size.height), base);
+    final base = Paint()
+      ..color = Colors.white12
+      ..strokeWidth = 1;
+    canvas.drawLine(
+      Offset(0, size.height),
+      Offset(size.width, size.height),
+      base,
+    );
   }
 
   @override

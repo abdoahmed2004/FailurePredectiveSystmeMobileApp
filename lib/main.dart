@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fpms_app/core/constants/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fpms_app/Screens/add_machine_screen.dart';
+import 'package:fpms_app/Screens/add_failure_screen.dart';
 // Screen Imports
 import 'package:fpms_app/Screens/splash_screen.dart';
 import 'package:fpms_app/Screens/onboarding_screen.dart';
@@ -43,11 +44,17 @@ class MyApp extends StatelessWidget {
         '/onboarding': (context) => const OnboardingScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/home': (context) => const HomePage(),
+        '/home': (context) {
+          // Extract user role from arguments
+          final args = ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>?;
+          return HomePage(userRole: args?['userRole'] ?? 'admin');
+        },
 
         // Machine Routes
         '/machines': (context) => const AllMachinesPage(),
         '/add-machine': (context) => const AddMachineScreen(),
+        '/add-failure': (context) => const AddFailureScreen(),
 
         // Auth Flow Routes
         '/forgot-password': (context) => const ForgotPasswordScreen(),
@@ -71,7 +78,6 @@ class MyApp extends StatelessWidget {
         },
         '/edit-profile': (context) => const EditProfileScreen(),
         '/change-password': (context) => const ChangePasswordScreen(),
-       
       },
     );
   }

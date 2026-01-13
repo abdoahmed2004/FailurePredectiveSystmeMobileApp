@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class OverviewPage extends StatelessWidget {
-  const OverviewPage({super.key});
+  final bool isDarkMode;
+  const OverviewPage({super.key, required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
+    final textColor = isDarkMode ? Colors.white : Colors.black;
+    final textColorLight = isDarkMode ? Colors.white60 : Colors.black54;
     return ListView(
       physics: const BouncingScrollPhysics(),
       children: [
@@ -25,10 +28,10 @@ class OverviewPage extends StatelessWidget {
                       style: GoogleFonts.poppins(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white)),
+                          color: textColor)),
                   const SizedBox(height: 6),
                   Text("Your Performance increased this month by 5.7%",
-                      style: GoogleFonts.poppins(color: Colors.white60)),
+                      style: GoogleFonts.poppins(color: textColorLight)),
                   const SizedBox(height: 12),
                   // Use Wrap to avoid horizontal overflow on narrow screens
                   Wrap(
@@ -64,12 +67,16 @@ class OverviewPage extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Live Machine States', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text('Live Machine States',
+                style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: textColor)),
             TextButton.icon(
               onPressed: () => Navigator.pushNamed(context, '/machines'),
-              icon: const Icon(Icons.list_alt, size: 18),
-              label: const Text('View All'),
-              style: TextButton.styleFrom(foregroundColor: Colors.white),
+              icon: Icon(Icons.list_alt, size: 18, color: textColor),
+              label: Text('View All', style: TextStyle(color: textColor)),
+              style: TextButton.styleFrom(foregroundColor: textColor),
             ),
           ],
         ),
@@ -80,17 +87,17 @@ class OverviewPage extends StatelessWidget {
           runSpacing: 8,
           children: List.generate(8, (i) {
             return Chip(
-              backgroundColor: const Color(0xFF121212),
-              side: const BorderSide(color: Colors.white10),
+              backgroundColor:
+                  isDarkMode ? const Color(0xFF121212) : Colors.grey[200],
+              side: BorderSide(
+                  color: isDarkMode ? Colors.white10 : Colors.grey[400]!),
               label: Text('MC${i + 1}',
-                  style: GoogleFonts.poppins(color: Colors.white)),
+                  style: GoogleFonts.poppins(color: textColor)),
             );
           }),
         ),
 
-
         // Large card: active sales placeholder chart
-       
 
         const SizedBox(height: 18),
 
@@ -111,24 +118,27 @@ class OverviewPage extends StatelessWidget {
   }
 
   Widget _smallStatCard(String title, String value) {
+    final textColor = isDarkMode ? Colors.white : Colors.black;
+    final textColorLight = isDarkMode ? Colors.white54 : Colors.black54;
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: _cardDecoration(),
+      decoration: _cardDecoration(isDarkMode),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12)),
+              style: GoogleFonts.poppins(color: textColorLight, fontSize: 12)),
           const SizedBox(height: 8),
           Text(value,
               style: GoogleFonts.poppins(
-                  fontSize: 18, fontWeight: FontWeight.bold)),
+                  fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
         ],
       ),
     );
   }
 
   Widget _legendDot(String label, Color color) {
+    final textColorLight = isDarkMode ? Colors.white70 : Colors.black54;
     return Row(
       children: [
         Container(
@@ -137,20 +147,20 @@ class OverviewPage extends StatelessWidget {
             decoration: BoxDecoration(
                 color: color, borderRadius: BorderRadius.circular(4))),
         const SizedBox(width: 6),
-        Text(label, style: GoogleFonts.poppins(color: Colors.white70)),
+        Text(label, style: GoogleFonts.poppins(color: textColorLight)),
       ],
     );
   }
 }
 
-BoxDecoration _cardDecoration() {
+BoxDecoration _cardDecoration(bool isDarkMode) {
   return BoxDecoration(
-    color: const Color(0xFF121212),
+    color: isDarkMode ? const Color(0xFF121212) : Colors.white,
     borderRadius: BorderRadius.circular(12),
-    border: Border.all(color: Colors.white10),
+    border: Border.all(color: isDarkMode ? Colors.white10 : Colors.grey[300]!),
     boxShadow: [
       BoxShadow(
-          color: Colors.black.withOpacity(0.3),
+          color: (isDarkMode ? Colors.black : Colors.grey).withOpacity(0.3),
           blurRadius: 8,
           offset: const Offset(0, 4))
     ],
@@ -187,7 +197,7 @@ class DonutPainter extends CustomPainter {
       start += sweep;
     }
 
-    // inner circle to create donut hole
+    // inner circle to create donut hole (use theme-aware color if needed in future)
     final innerPaint = Paint()..color = const Color(0xFF0D0D0D);
     canvas.drawCircle(center, radius - stroke - 6, innerPaint);
 

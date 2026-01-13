@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fpms_app/Screens/analytics_page.dart';
+import 'package:fpms_app/Screens/failures_page.dart';
 import 'package:fpms_app/Screens/overview_page.dart';
 import 'package:fpms_app/Screens/weekly_page.dart';
 import 'package:fpms_app/Screens/Profile/profile_screen.dart'; // Import Profile Screen
@@ -7,7 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:fpms_app/core/constants/app_colors.dart'; // Import colors for the button
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final String userRole; // "admin", "engineer", or "technician"
+  const HomePage({super.key, this.userRole = 'admin'});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -15,7 +16,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int bottomIndex = 0;
-  int topTabIndex = 0; // 0 Overview, 1 Weekly, 2 Analytic
+  int topTabIndex = 0; // 0 Overview, 1 Weekly, 2 Failures
 
   // Theme State
   bool isDarkMode = true; // Default is Dark
@@ -23,7 +24,7 @@ class _HomePageState extends State<HomePage> {
   final pages = [
     'Overview',
     'Weekly',
-    'Analytic',
+    'Failures',
   ];
 
   void _toggleTheme(bool value) {
@@ -35,7 +36,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     // Define colors based on theme
-    final backgroundColor = isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFF5F5F5);
+    final backgroundColor =
+        isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFF5F5F5);
     final bottomNavBg = isDarkMode ? const Color(0xFF0F0F0F) : Colors.white;
     final bottomNavSelected = const Color(0xFFFF9800);
     final bottomNavUnselected = isDarkMode ? Colors.white54 : Colors.black54;
@@ -52,16 +54,21 @@ class _HomePageState extends State<HomePage> {
 
             // Index 1: Dashboard (Placeholder)
             Center(
-                child: Text(
-                    "Dashboard",
+                child: Text("Dashboard",
                     style: GoogleFonts.poppins(
                       color: isDarkMode ? Colors.white : Colors.black,
                       fontSize: 20,
-                    )
-                )
-            ),
+                    ))),
 
-            // Index 2: Profile Screen
+            // Index 2: Chatbot (Placeholder)
+            Center(
+                child: Text("Chatbot",
+                    style: GoogleFonts.poppins(
+                      color: isDarkMode ? Colors.white : Colors.black,
+                      fontSize: 20,
+                    ))),
+
+            // Index 3: Profile Screen
             // We pass the state and the function down to the profile
             ProfileScreen(
               isDarkMode: isDarkMode,
@@ -71,20 +78,24 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
 
-      // === UPDATED FAB: Pass isDarkMode ===
-      floatingActionButton: bottomIndex == 0 
+      // === Role-Based FAB: Admin=Overview, Engineer=Failures ===
+      floatingActionButton: _shouldShowFAB()
           ? FloatingActionButton(
               backgroundColor: AppColors.primaryOrange,
               elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
               onPressed: () {
-                Navigator.pushNamed(context, '/add-machine', arguments: {
-                  'isDarkMode': isDarkMode, // <--- Added this line
+                final route = widget.userRole.toLowerCase() == 'engineer'
+                    ? '/add-failure'
+                    : '/add-machine';
+                Navigator.pushNamed(context, route, arguments: {
+                  'isDarkMode': isDarkMode,
                 });
               },
               child: const Icon(Icons.add, color: Colors.white, size: 28),
             )
-          : null, 
+          : null,
 
       // Bottom navigation
       bottomNavigationBar: BottomNavigationBar(
@@ -101,10 +112,30 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
               icon: Icon(Icons.widgets_outlined), label: 'Dashboard'),
           BottomNavigationBarItem(
+              icon: Icon(Icons.chat_bubble_outline), label: 'Chatbot'),
+          BottomNavigationBarItem(
               icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
       ),
     );
+  }
+
+  // Helper: Determine if FAB should show based on role and current tab
+  bool _shouldShowFAB() {
+    if (bottomIndex != 0) return false; // Only on Home bottom tab
+
+    // Technician: No FAB anywhere
+    if (widget.userRole.toLowerCase() == 'technician') {
+      return false;
+    }
+
+    if (widget.userRole.toLowerCase() == 'engineer') {
+      // Engineer: FAB on Failures tab (index 2)
+      return topTabIndex == 2;
+    } else {
+      // Admin: FAB on Overview tab (index 0)
+      return topTabIndex == 0;
+    }
   }
 
   // Main home layout
@@ -125,10 +156,15 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: IndexedStack(
               index: topTabIndex,
-              children: const [
-                OverviewPage(),
-                WeeklyPage(),
-                AnalyticsPage(),
+              children: [
+                OverviewPage(isDarkMode: isDarkMode),
+                WeeklyPage(isDarkMode: isDarkMode),
+                FailuresPage(
+                  isDarkMode: isDarkMode,
+                  userRole: widget.userRole,
+                  userName:
+                      'Ali Ahmed', // TODO: Get from logged-in user context
+                ),
               ],
             ),
           ),
@@ -138,13 +174,30 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    // Role-based gradient colors
+    final List<Color> gradientColors =
+        widget.userRole.toLowerCase() == 'engineer'
+            ? [
+                const Color(0xFF5C3A9E),
+                const Color(0xFF8B5FBF)
+              ] // Purple/Violet for Engineer
+            : widget.userRole.toLowerCase() == 'technician'
+                ? [
+                    const Color(0xFF1E88E5),
+                    const Color(0xFF42A5F5)
+                  ] // Blue for Technician
+                : [
+                    const Color(0xFF8B5A3C),
+                    const Color(0xFFD08A5C)
+                  ]; // Brown/Orange for Admin
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFF8A00), Color(0xFF5C2CF8)],
+        gradient: LinearGradient(
+          colors: gradientColors,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -157,16 +210,23 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Row(
         children: [
-          // Worker image placeholder (circular)
+          // Worker/Engineer/Technician image based on role
           Container(
             width: 72,
-            height: 72,
+            height: 90,
             decoration: BoxDecoration(
-              color: Colors.white24,
               borderRadius: BorderRadius.circular(16),
+              image: DecorationImage(
+                image: AssetImage(
+                  widget.userRole.toLowerCase() == 'engineer'
+                      ? 'assets/images/Engineer icon.png'
+                      : widget.userRole.toLowerCase() == 'technician'
+                          ? 'assets/images/Technician icon.png'
+                          : 'assets/images/Manager.png',
+                ),
+                fit: BoxFit.cover,
+              ),
             ),
-            child: const Icon(Icons.engineering_rounded,
-                size: 44, color: Colors.white),
           ),
           const SizedBox(width: 12),
           // Text area
@@ -203,9 +263,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSegmentedControl() {
-    final containerColor = isDarkMode ? const Color(0xFF111111) : Colors.grey[200];
+    final containerColor =
+        isDarkMode ? const Color(0xFF111111) : Colors.grey[200];
     final borderColor = isDarkMode ? Colors.white12 : Colors.grey[300]!;
-    final selectedBg = isDarkMode ? const Color(0xFF0F0F0F).withOpacity(0.2) : Colors.white;
+    final selectedBg =
+        isDarkMode ? const Color(0xFF0F0F0F).withOpacity(0.2) : Colors.white;
     final unselectedText = isDarkMode ? Colors.white70 : Colors.black54;
 
     return Container(
@@ -225,19 +287,18 @@ class _HomePageState extends State<HomePage> {
                 duration: const Duration(milliseconds: 220),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: selected
-                      ? selectedBg
-                      : Colors.transparent,
+                  color: selected ? selectedBg : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
-                  boxShadow: selected && !isDarkMode ? [const BoxShadow(color: Colors.black12, blurRadius: 4)] : [],
+                  boxShadow: selected && !isDarkMode
+                      ? [const BoxShadow(color: Colors.black12, blurRadius: 4)]
+                      : [],
                 ),
                 child: Center(
                   child: Text(
                     pages[i],
                     style: GoogleFonts.poppins(
-                      color: selected
-                          ? const Color(0xFFFF9800)
-                          : unselectedText,
+                      color:
+                          selected ? const Color(0xFFFF9800) : unselectedText,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                     ),
                   ),

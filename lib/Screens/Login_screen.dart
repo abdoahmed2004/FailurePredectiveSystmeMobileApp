@@ -58,8 +58,15 @@ class _LoginScreenState extends State<LoginScreen> {
           "Login successful! Welcome, ${response.user.fullName} (${response.user.role})!",
           isError: false);
 
-      // Navigate to Home and clear back stack
-      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+      // Navigate to Home and clear back stack, passing user role
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/home',
+        (route) => false,
+        arguments: {
+          'userRole': response.user.role, // Pass the user role
+        },
+      );
 
       // Optionally log token for debugging
       print("Token received: ${response.token}");
