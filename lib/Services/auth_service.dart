@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../Models/user_model.dart';
 import '../Models/machine_model.dart';
+import '../Models/failure_model.dart';
 
 // Base URL resolver:
 // - You can override at build time with `--dart-define=API_BASE_URL=http://192.168.1.4:3000/api`
@@ -571,26 +572,25 @@ Future<String> forgotPassword({required String email}) async {
     }
 
     final url = Uri.parse('$baseUrl/failures');
+    // Generate a unique failure ID
     final failureId = 'FAIL-${DateTime.now().millisecondsSinceEpoch}';
+    // Map severity to requested capitalized SeverityLevel
+    final severityLevel = {
+      'low': 'Low',
+      'medium': 'Medium',
+      'critical': 'Critical',
+    }[severity] ?? severity;
+
+    // Build payload to match backend expectation exactly
     final payload = {
-      // Backend expects machineId lowercase for Machines.findById
       'machineId': machineId,
-
-      // Duplicate common fields in both cases to be safe with schema
-      'machineName': machineName,
-      'MachineName': machineName,
       'machineType': machineType,
-      'MachineType': machineType,
-
-      // Required fields per validation error (capitalized)
+      'machineName': machineName,
       'Description': description,
       'AssignedTo': assignedTo,
       'ReportedBy': assignedBy,
+      'SeverityLevel': severityLevel,
       'failureId': failureId,
-
-      // Severity (send both just in case)
-      'severity': severity,
-      'Severity': severity,
     };
     final body = jsonEncode(payload);
 
@@ -618,6 +618,169 @@ Future<String> forgotPassword({required String email}) async {
         try {
           final errorBody = jsonDecode(response.body);
           errorMessage = errorBody['message'] ?? 'Failed to create failure.';
+        } catch (_) {
+          errorMessage = 'Server returned: ${response.body}';
+        }
+        throw Exception('HTTP ${response.statusCode}: $errorMessage');
+      }
+    } on TimeoutException {
+      throw Exception('Request timed out. Please check your network and try again.');
+    } on SocketException {
+      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  // --- FAILURES FUNCTIONS ---
+
+  // Get all failures
+  Future<List<Failure>> getAllFailures() async {
+    final url = Uri.parse('$baseUrl/failures');
+    try {
+      final headers = _getAuthHeaders();
+      _debugRequest('GET', url, null, headers);
+      final response = await http.get(url, headers: headers).timeout(requestTimeout);
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        final List<dynamic> list = jsonResponse is List ? jsonResponse : (jsonResponse['failures'] ?? []);
+        return list.map((e) => Failure.fromJson(e)).toList();
+      } else {
+        String errorMessage;
+        try {
+          final errorBody = jsonDecode(response.body);
+          errorMessage = errorBody['message'] ?? 'Failed to fetch failures.';
+        } catch (_) {
+          errorMessage = 'Server returned: ${response.body}';
+        }
+        throw Exception('HTTP ${response.statusCode}: $errorMessage');
+      }
+    } on TimeoutException {
+      throw Exception('Request timed out. Please check your network and try again.');
+    } on SocketException {
+      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  // Get failures by reporter email
+  Future<List<Failure>> getFailuresByReporter(String email) async {
+    final url = Uri.parse('$baseUrl/failures/reportedBy/$email');
+    try {
+      final headers = _getAuthHeaders();
+      _debugRequest('GET', url, null, headers);
+      final response = await http.get(url, headers: headers).timeout(requestTimeout);
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        final List<dynamic> list = jsonResponse is List ? jsonResponse : (jsonResponse['failures'] ?? []);
+        return list.map((e) => Failure.fromJson(e)).toList();
+      } else {
+        String errorMessage;
+        try {
+          final errorBody = jsonDecode(response.body);
+          errorMessage = errorBody['message'] ?? 'Failed to fetch failures by reporter.';
+        } catch (_) {
+          errorMessage = 'Server returned: ${response.body}';
+        }
+        throw Exception('HTTP ${response.statusCode}: $errorMessage');
+      }
+    } on TimeoutException {
+      throw Exception('Request timed out. Please check your network and try again.');
+    } on SocketException {
+      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  // Update failure status
+  Future<Failure> updateFailureStatus({
+    required String failureId,
+    required String status,
+  }) async {
+    final url = Uri.parse('$baseUrl/failures/$failureId/status');
+    final body = jsonEncode({'status': status});
+    try {
+      final headers = _getAuthHeaders();
+      _debugRequest('PATCH', url, body, headers);
+      final response = await http.patch(url, headers: headers, body: body).timeout(requestTimeout);
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        final failureJson = jsonResponse is Map && jsonResponse['failure'] != null ? jsonResponse['failure'] : jsonResponse;
+        return Failure.fromJson(failureJson);
+      } else if (response.statusCode == 404) {
+        throw Exception('Failure not found');
+      } else {
+        String errorMessage;
+        try {
+          final errorBody = jsonDecode(response.body);
+          errorMessage = errorBody['message'] ?? 'Failed to update failure status.';
+        } catch (_) {
+          errorMessage = 'Server returned: ${response.body}';
+        }
+        throw Exception('HTTP ${response.statusCode}: $errorMessage');
+      }
+    } on TimeoutException {
+      throw Exception('Request timed out. Please check your network and try again.');
+    } on SocketException {
+      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  // Get critical failures
+  Future<List<Failure>> getCriticalFailures() async {
+    final url = Uri.parse('$baseUrl/failures/status/critical');
+    try {
+      final headers = _getAuthHeaders();
+      _debugRequest('GET', url, null, headers);
+      final response = await http.get(url, headers: headers).timeout(requestTimeout);
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        final List<dynamic> list = jsonResponse is List ? jsonResponse : (jsonResponse['failures'] ?? []);
+        return list.map((e) => Failure.fromJson(e)).toList();
+      } else {
+        String errorMessage;
+        try {
+          final errorBody = jsonDecode(response.body);
+          errorMessage = errorBody['message'] ?? 'Failed to fetch critical failures.';
+        } catch (_) {
+          errorMessage = 'Server returned: ${response.body}';
+        }
+        throw Exception('HTTP ${response.statusCode}: $errorMessage');
+      }
+    } on TimeoutException {
+      throw Exception('Request timed out. Please check your network and try again.');
+    } on SocketException {
+      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  // Get failures assigned to a technician by email
+  Future<List<Failure>> getFailuresAssignedTo(String email) async {
+    final url = Uri.parse('$baseUrl/failures/assignedTo/$email');
+    try {
+      final headers = _getAuthHeaders();
+      _debugRequest('GET', url, null, headers);
+      final response = await http.get(url, headers: headers).timeout(requestTimeout);
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        final List<dynamic> list = jsonResponse is List ? jsonResponse : (jsonResponse['failures'] ?? []);
+        return list.map((e) => Failure.fromJson(e)).toList();
+      } else {
+        String errorMessage;
+        try {
+          final errorBody = jsonDecode(response.body);
+          errorMessage = errorBody['message'] ?? 'Failed to fetch assigned failures.';
         } catch (_) {
           errorMessage = 'Server returned: ${response.body}';
         }

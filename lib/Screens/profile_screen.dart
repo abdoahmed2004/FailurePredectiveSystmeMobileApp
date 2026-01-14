@@ -15,6 +15,17 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final roleLower = role.toLowerCase().trim();
+    final String avatarAsset = () {
+      if (roleLower == 'manager' || roleLower == 'admin') {
+        return 'assets/images/Manager.png';
+      } else if (roleLower == 'engineer') {
+        return 'assets/images/Engineer icon.png';
+      } else if (roleLower == 'technician') {
+        return 'assets/images/Technician icon.png';
+      }
+      return 'assets/images/logo.png';
+    }();
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D0D),
       appBar: AppBar(
@@ -50,10 +61,13 @@ class ProfileScreen extends StatelessWidget {
                   width: 2,
                 ),
               ),
-              child: const Icon(
-                Icons.person,
-                color: Color(0xFFFF9800),
-                size: 80,
+              child: ClipOval(
+                child: Image.asset(
+                  avatarAsset,
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
 

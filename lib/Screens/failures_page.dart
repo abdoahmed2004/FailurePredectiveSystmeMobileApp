@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../Services/auth_service.dart';
+import '../Models/failure_model.dart';
 
 // Data model for failure items
 class FailureItem {
@@ -38,54 +40,33 @@ class FailuresPage extends StatefulWidget {
 
 class _FailuresPageState extends State<FailuresPage> {
   String selectedFilter = 'All'; // 'All' or 'Critical' or 'my failures'
+  bool _isLoading = true;
+  String? _userEmail;
+  String? _userId;
+  int _loadSeq = 0; // Guards against race conditions from overlapping fetches
 
-  // Sample data - replace with backend data later
-  // Make it mutable so we can update status
-  late List<FailureItem> failureItems;
+  // Backed by API data
+  List<FailureItem> failureItems = [];
 
   @override
   void initState() {
     super.initState();
-    // Initialize with sample data
-    failureItems = [
-      FailureItem(
-        id: '1',
-        machineCode: '#ML3XC',
-        timestamp: DateTime(2024, 12, 29, 12, 45),
-        description:
-            'Rising temperature readings, burning smell, or automatic shutdowns.',
-        status: 'open',
-        assignedTo: 'Ali Ahmed',
-      ),
-      FailureItem(
-        id: '2',
-        machineCode: 'MC1',
-        timestamp: DateTime(2024, 12, 29, 12, 45),
-        description:
-            'Rising temperature readings, burning smell, or automatic shutdowns.',
-        status: 'critical',
-        assignedTo: 'Ali Ahmed',
-      ),
-      FailureItem(
-        id: '3',
-        machineCode: '#ML3XC',
-        timestamp: DateTime(2024, 12, 29, 12, 45),
-        description:
-            'Rising temperature readings, burning smell, or automatic shutdowns.',
-        status: 'fixed',
-        assignedTo: 'Ali Ahmed',
-      ),
-    ];
+    _initialLoad();
+  }
+
+  Future<void> _initialLoad() async {
+    try {
+      final me = await AuthService().getPersonalInfo();
+      _userEmail = me.email;
+      _userId = me.id;
+    } catch (_) {}
+    setState(() => _isLoading = true);
+    await _fetchAllFailures();
   }
 
   List<FailureItem> get filteredItems {
-    if (selectedFilter == 'Critical') {
-      return failureItems.where((item) => item.status == 'critical').toList();
-    } else if (selectedFilter == 'my failures') {
-      return failureItems
-          .where((item) => item.assignedTo == widget.userName)
-          .toList();
-    }
+    // The list is already loaded per filter by calling the corresponding endpoint.
+    // Avoid client-side re-filtering that may hide records due to case/whitespace.
     return failureItems;
   }
 
@@ -99,10 +80,12 @@ class _FailuresPageState extends State<FailuresPage> {
 
     return Container(
       color: bgColor,
-      child: ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+      child: Stack(
         children: [
+          ListView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            children: [
           // Header
 
           const SizedBox(height: 20),
@@ -138,13 +121,63 @@ class _FailuresPageState extends State<FailuresPage> {
 
           const SizedBox(height: 16),
 
-          // Failure Items List
-          ...filteredItems.map((item) => _buildFailureCard(
-                item,
-                textColor,
-                textColorLight,
-                cardBg,
-              )),
+          // Failure Items List or Empty State
+          if (filteredItems.isNotEmpty)
+            ...filteredItems.map((item) => _buildFailureCard(
+                  item,
+                  textColor,
+                  textColorLight,
+                  cardBg,
+                ))
+          else if (!_isLoading)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              alignment: Alignment.center,
+              child: Column(
+                children: [
+                  Icon(Icons.inbox_outlined,
+                      size: 40,
+                      color: widget.isDarkMode ? Colors.white24 : Colors.black26),
+                  const SizedBox(height: 12),
+                  Text(
+                    'No failures found',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: textColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    selectedFilter == 'Critical'
+                        ? 'There are no critical failures right now.'
+                        : selectedFilter == 'my failures'
+                            ? (widget.userRole.toLowerCase() == 'technician'
+                                ? 'You have no assigned failures yet.'
+                                : 'You have no reported failures yet.')
+                            : 'Try refreshing or changing filters.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: textColorLight,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+            ],
+          ),
+          if (_isLoading)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              child: LinearProgressIndicator(
+                color: const Color(0xFFFF9800),
+                backgroundColor:
+                    widget.isDarkMode ? Colors.white12 : Colors.black12,
+              ),
+            ),
         ],
       ),
     );
@@ -156,7 +189,19 @@ class _FailuresPageState extends State<FailuresPage> {
       onTap: () {
         setState(() {
           selectedFilter = label;
+          _isLoading = true;
         });
+        if (label == 'my failures' && _userEmail != null) {
+          if (widget.userRole.toLowerCase() == 'technician') {
+            _fetchAssignedFailures(_userEmail!);
+          } else {
+            _fetchMyFailures(_userEmail!);
+          }
+        } else if (label == 'Critical') {
+          _fetchCriticalFailures();
+        } else {
+          _fetchAllFailures();
+        }
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -190,7 +235,10 @@ class _FailuresPageState extends State<FailuresPage> {
       'Fatima Ali',
     ];
 
-    String? selectedEngineer = item.assignedTo; // Default to current assignment
+    // Default to current assignment only if it's in the engineers list
+    String? selectedEngineer = engineers.contains(item.assignedTo)
+      ? item.assignedTo
+      : null;
 
     showDialog(
       context: context,
@@ -261,6 +309,13 @@ class _FailuresPageState extends State<FailuresPage> {
                             style: GoogleFonts.poppins(
                                 color: textColor, fontSize: 14),
                             icon: Icon(Icons.arrow_drop_down, color: textColor),
+                            hint: Text(
+                              'Select engineer',
+                              style: GoogleFonts.poppins(
+                                color: textColor,
+                                fontSize: 14,
+                              ),
+                            ),
                             items: engineers.map((String engineer) {
                               return DropdownMenuItem<String>(
                                 value: engineer,
@@ -275,7 +330,8 @@ class _FailuresPageState extends State<FailuresPage> {
                           ),
                         ),
                       ),
-                      if (selectedEngineer != item.assignedTo)
+                      // Show action only after a valid selection different to current assignment
+                      if (selectedEngineer != null && selectedEngineer != item.assignedTo)
                         Padding(
                           padding: const EdgeInsets.only(top: 12),
                           child: ElevatedButton(
@@ -358,36 +414,40 @@ class _FailuresPageState extends State<FailuresPage> {
 
   // Update failure status
   void _updateFailureStatus(FailureItem item, String newStatus) {
-    setState(() {
-      // Find the item in the list and update its status
-      final index = failureItems.indexWhere((f) => f.id == item.id);
-      if (index != -1) {
-        failureItems[index] = FailureItem(
-          id: item.id,
-          machineCode: item.machineCode,
-          timestamp: item.timestamp,
-          description: item.description,
-          status: newStatus,
-          assignedTo: item.assignedTo,
-        );
-      }
+    AuthService()
+        .updateFailureStatus(failureId: item.id, status: newStatus)
+        .then((updated) {
+      setState(() {
+        final index = failureItems.indexWhere((f) => f.id == item.id);
+        if (index != -1) {
+          failureItems[index] = FailureItem(
+            id: updated.id,
+            machineCode: updated.machineName.isNotEmpty
+                ? updated.machineName
+                : updated.machineId,
+            timestamp: updated.createdAt ?? item.timestamp,
+            description: updated.description,
+            status: updated.status,
+            assignedTo: updated.assignedTo,
+          );
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Status updated to ${updated.status}'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }).catchError((e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update status: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
     });
-
-    // TODO: Send update to backend
-    // Example:
-    // await FailureService().updateFailureStatus(
-    //   failureId: item.id,
-    //   newStatus: newStatus,
-    // );
-
-    // Show confirmation
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Status updated to $newStatus'),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   // Assign failure to engineer (Technician feature)
@@ -520,7 +580,7 @@ class _FailuresPageState extends State<FailuresPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              '${item.machineCode.startsWith('#') ? item.machineCode.substring(1) : item.machineCode} ${_formatTimestamp(item.timestamp)}',
+              '${item.machineCode} ${_formatTimestamp(item.timestamp)}',
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 color: textColorLight,
@@ -585,5 +645,162 @@ class _FailuresPageState extends State<FailuresPage> {
     final period = timestamp.hour >= 12 ? 'PM' : 'AM';
 
     return '$month $day, $hour:$minute $period';
+  }
+
+  // --- Data fetching helpers ---
+  Future<void> _fetchAllFailures() async {
+    final seq = ++_loadSeq;
+    try {
+      final list = await AuthService().getAllFailures();
+      if (!mounted || seq != _loadSeq) return; // ignore stale responses
+      setState(() {
+        failureItems = list
+            .map((f) => FailureItem(
+                  id: f.id,
+                  machineCode: f.machineName.isNotEmpty
+                      ? f.machineName
+                      : f.machineId,
+                  timestamp: f.createdAt ?? DateTime.now(),
+                  description: f.description,
+                  status: f.status,
+                  assignedTo: f.assignedTo,
+                ))
+            .toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted || seq != _loadSeq) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load failures: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _fetchMyFailures(String email) async {
+    final seq = ++_loadSeq;
+    try {
+      final list = await AuthService().getFailuresByReporter(email);
+      if (!mounted || seq != _loadSeq) return;
+      List<Failure> items = list;
+      // Fallback: if endpoint returns empty (older records may store ReportedBy as ID),
+      // fetch all and filter by either email or id.
+      if (items.isEmpty) {
+        try {
+          final all = await AuthService().getAllFailures();
+          items = all.where((f) => (f.reportedBy == _userEmail) || (f.reportedBy == _userId)).toList();
+        } catch (_) {}
+      }
+      if (!mounted || seq != _loadSeq) return;
+      setState(() {
+        failureItems = items
+            .map((f) => FailureItem(
+                  id: f.id,
+                  machineCode: f.machineName.isNotEmpty
+                      ? f.machineName
+                      : f.machineId,
+                  timestamp: f.createdAt ?? DateTime.now(),
+                  description: f.description,
+                  status: f.status,
+                  assignedTo: f.assignedTo,
+                ))
+            .toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted || seq != _loadSeq) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load my failures: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _fetchCriticalFailures() async {
+    final seq = ++_loadSeq;
+    try {
+      final list = await AuthService().getCriticalFailures();
+      if (!mounted || seq != _loadSeq) return;
+      List<Failure> items = list;
+      // Fallback: server may store status with different case/whitespace.
+      if (items.isEmpty) {
+        try {
+          final all = await AuthService().getAllFailures();
+          items = all.where((f) => f.status.trim().toLowerCase() == 'critical').toList();
+        } catch (_) {}
+      }
+      if (!mounted || seq != _loadSeq) return;
+      setState(() {
+        failureItems = items
+            .map((f) => FailureItem(
+                  id: f.id,
+                  machineCode: f.machineName.isNotEmpty
+                      ? f.machineName
+                      : f.machineId,
+                  timestamp: f.createdAt ?? DateTime.now(),
+                  description: f.description,
+                  status: f.status,
+                  assignedTo: f.assignedTo,
+                ))
+            .toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted || seq != _loadSeq) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load critical failures: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _fetchAssignedFailures(String email) async {
+    final seq = ++_loadSeq;
+    try {
+      final list = await AuthService().getFailuresAssignedTo(email);
+      if (!mounted || seq != _loadSeq) return;
+      List<Failure> items = list;
+      // Fallback: older records might store AssignedTo as ID
+      if (items.isEmpty) {
+        try {
+          final all = await AuthService().getAllFailures();
+          items = all.where((f) => (f.assignedTo == _userEmail) || (f.assignedTo == _userId)).toList();
+        } catch (_) {}
+      }
+      if (!mounted || seq != _loadSeq) return;
+      setState(() {
+        failureItems = items
+            .map((f) => FailureItem(
+                  id: f.id,
+                  machineCode: f.machineName.isNotEmpty
+                      ? f.machineName
+                      : f.machineId,
+                  timestamp: f.createdAt ?? DateTime.now(),
+                  description: f.description,
+                  status: f.status,
+                  assignedTo: f.assignedTo,
+                ))
+            .toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted || seq != _loadSeq) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load assigned failures: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

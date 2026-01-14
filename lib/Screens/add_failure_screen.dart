@@ -54,7 +54,7 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
 
   String _getSeverityText() {
     if (_severityLevel <= 0.5) return 'Low';
-    if (_severityLevel <= 1.5) return 'Normal';
+    if (_severityLevel <= 1.5) return 'Medium';
     return 'Critical';
   }
 
@@ -98,9 +98,9 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
         machineType: _machineTypeController.text.trim(),
         machineId: resolvedMachineId,
         description: _descriptionController.text.trim(),
-        assignedTo: _selectedAssignee!,
+        assignedTo: _selectedAssignee!, // send assignee email
         severity: _mapSeverityForApi(),
-        assignedBy: me.id,
+        assignedBy: me.email, // send reporter email
       );
 
       _showSnackbar(message, isError: false);
@@ -282,11 +282,11 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
                 value: _selectedAssignee,
                 label: 'Assign To',
                 items: _technicians
-                    .map((u) => DropdownMenuItem<String>(
-                          value: u.id,
-                          child: Text(u.fullName, style: GoogleFonts.poppins(color: textColor, fontSize: 14)),
-                        ))
-                    .toList(),
+                  .map((u) => DropdownMenuItem<String>(
+                      value: u.email,
+                      child: Text(u.fullName, style: GoogleFonts.poppins(color: textColor, fontSize: 14)),
+                    ))
+                  .toList(),
                 onChanged: (value) => setState(() => _selectedAssignee = value),
                 textColor: textColor,
                 textColorLight: textColorLight,
@@ -351,7 +351,7 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
                           ),
                         ),
                         Text(
-                          'Normal',
+                          'Medium',
                           style: GoogleFonts.poppins(
                             color: _severityLevel > 0.5 && _severityLevel <= 1.5
                                 ? Colors.orange
