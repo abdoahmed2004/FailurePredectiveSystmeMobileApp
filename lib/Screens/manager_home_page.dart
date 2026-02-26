@@ -1,0 +1,1885 @@
+import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../Services/auth_service.dart';
+import '../Models/machine_model.dart';
+import '../Models/failure_model.dart';
+import 'Profile/profile_screen.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  ManagerHomePage – root scaffold for technician role
+// ─────────────────────────────────────────────────────────────────────────────
+class ManagerHomePage extends StatefulWidget {
+  final String userName;
+  const ManagerHomePage({super.key, this.userName = 'Employee'});
+
+  @override
+  State<ManagerHomePage> createState() => _ManagerHomePageState();
+}
+
+class _ManagerHomePageState extends State<ManagerHomePage> {
+  int _bottomIndex = 0;
+  bool isDarkMode = true;
+
+  void _toggleTheme(bool v) => setState(() => isDarkMode = v);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: IndexedStack(
+          index: _bottomIndex,
+          children: [
+            _ManagerMainContent(userName: widget.userName),
+            const Center(
+                child: _PlaceholderTab(
+                    icon: Icons.shopping_bag_outlined, label: 'Jobs')),
+            const Center(
+                child: _PlaceholderTab(
+                    icon: Icons.schedule_outlined, label: 'Schedule')),
+            ProfileScreen(isDarkMode: isDarkMode, onThemeChanged: _toggleTheme),
+          ],
+        ),
+      ),
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    final items = [
+      {'icon': 'assets/images/home.png', 'label': 'Home'},
+      {'icon': 'assets/images/menu - wallet.png', 'label': 'Jobs'},
+      {'icon': 'assets/images/circleicon.png', 'label': 'Schedule'},
+      {'icon': 'assets/images/profileicon.png', 'label': 'Profile'},
+    ];
+
+    return Container(
+      height: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
+        boxShadow: [
+          BoxShadow(
+              color: Color(0x14000000), blurRadius: 12, offset: Offset(0, -4)),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(items.length, (i) {
+          final selected = i == _bottomIndex;
+          final iconPath = items[i]['icon'] as String;
+          final label = items[i]['label'] as String;
+
+          return GestureDetector(
+            onTap: () => setState(() => _bottomIndex = i),
+            behavior: HitTestBehavior.opaque,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (selected)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF5C3A9E),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Row(
+                      children: [
+                        Image.asset(iconPath,
+                            width: 20, height: 20, color: Colors.white),
+                        const SizedBox(width: 6),
+                        Text(label,
+                            style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  )
+                else
+                  Image.asset(iconPath,
+                      width: 24, height: 24, color: const Color(0xFFAAAAAA)),
+                if (selected) ...[
+                  const SizedBox(height: 3),
+                  Container(
+                    width: 5,
+                    height: 5,
+                    decoration: const BoxDecoration(
+                        color: Color(0xFFFF9800), shape: BoxShape.circle),
+                  ),
+                ],
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Main content area
+// ─────────────────────────────────────────────────────────────────────────────
+class _ManagerMainContent extends StatefulWidget {
+  final String userName;
+  const _ManagerMainContent({required this.userName});
+
+  @override
+  State<_ManagerMainContent> createState() => _ManagerMainContentState();
+}
+
+class _ManagerMainContentState extends State<_ManagerMainContent> {
+  // 0 = Overview, 1 = Weekly, 2 = Failures
+  int _tabIndex = 0;
+
+  List<Machine> _machines = [];
+  List<Failure> _failures = [];
+  bool _loadingMachines = false;
+  bool _loadingFailures = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAll();
+  }
+
+  Future<void> _fetchAll() async {
+    setState(() {
+      _loadingMachines = true;
+      _loadingFailures = true;
+    });
+    try {
+      final m = await AuthService().getAllMachines();
+      if (mounted) setState(() => _machines = m);
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loadingMachines = false);
+    }
+    try {
+      final f = await AuthService().getAllFailures();
+      if (mounted) setState(() => _failures = f);
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loadingFailures = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isFailures = _tabIndex == 2;
+    return Column(
+      children: [
+        // ── Gradient header (switches on tab) ──────────────────────────────
+        _buildHeader(isFailures),
+        // ── White body: tabs + content ─────────────────────────────────────
+        Expanded(
+          child: Container(
+            color: Colors.white,
+            child: Column(
+              children: [
+                const SizedBox(height: 18),
+                _buildTabBar(),
+                const SizedBox(height: 14),
+                Expanded(child: _buildTabBody()),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Header (switches title + card based on active tab) ──────────────────
+  Widget _buildHeader(bool isFailures) {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF2E1F5E), Color(0xFF4A3080)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: Column(
+        children: [
+          // Top bar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 10, 18, 12),
+            child: Row(
+              children: [
+                const Icon(Icons.grid_view_rounded,
+                    color: Colors.white70, size: 22),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      isFailures ? 'Failure Overview' : 'Welcome Back',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const Icon(Icons.more_horiz, color: Colors.white70, size: 22),
+              ],
+            ),
+          ),
+
+          // Card: line chart on Failures tab, orange banner otherwise
+          if (isFailures) _buildChartCard() else _buildBannerCard(),
+        ],
+      ),
+    );
+  }
+
+  // ── Orange banner card ────────────────────────────────────────────────
+  Widget _buildBannerCard() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      height: 150,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFC97A30), Color(0xFFE8A84C)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            right: -10,
+            top: -10,
+            child: Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.08),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            bottom: 0,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                topLeft: Radius.circular(20),
+              ),
+              child: Image.asset(
+                'assets/images/Manager.png',
+                width: 130,
+                height: 150,
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 130,
+                  height: 150,
+                  color: Colors.transparent,
+                  child: const Icon(Icons.person_rounded,
+                      color: Colors.white54, size: 70),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 14,
+            top: 0,
+            bottom: 0,
+            left: 120,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Your Machine\nOur Priority !',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'start now and take better\ncare of your business',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: Colors.white70,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Failure line chart card (shown on Failures tab) ─────────────────────
+  Widget _buildChartCard() {
+    const monthLabels = ['JUN', 'JULY', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    final monthIndices = [6, 7, 8, 9, 10, 11, 12];
+    final counts = monthIndices.map((m) {
+      return _failures
+          .where((f) => f.createdAt != null && f.createdAt!.month == m)
+          .length
+          .toDouble();
+    }).toList();
+    final chartData =
+        _failures.isEmpty ? [5.0, 12.0, 8.0, 18.0, 22.0, 15.0, 10.0] : counts;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Failures',
+                      style: GoogleFonts.poppins(
+                          color: const Color(0xFF888888), fontSize: 12)),
+                  Text(
+                    '${_failures.isEmpty ? 23 : _failures.length}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1A1A1A),
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFDDDDDD)),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Text('Monthly',
+                        style: GoogleFonts.poppins(
+                            fontSize: 11, color: const Color(0xFF555555))),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.keyboard_arrow_down,
+                        size: 14, color: Color(0xFF555555)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 100,
+            child: CustomPaint(
+              painter: _LineChartPainter(data: chartData),
+              size: Size.infinite,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: monthLabels
+                .map((m) => Text(m,
+                    style: GoogleFonts.poppins(
+                        fontSize: 9,
+                        color: const Color(0xFF999999),
+                        fontWeight: FontWeight.w500)))
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Tab bar ─────────────────────────────────────────────────────────────────
+  Widget _buildTabBar() {
+    const tabs = ['Overview', 'Weekly', 'Failures'];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: List.generate(tabs.length, (i) {
+          final selected = i == _tabIndex;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _tabIndex = i),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: selected ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(30),
+                  border: selected
+                      ? Border.all(color: const Color(0xFFDDDDDD))
+                      : null,
+                  boxShadow: selected
+                      ? [
+                          const BoxShadow(
+                            color: Color(0x18000000),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          )
+                        ]
+                      : [],
+                ),
+                child: Center(
+                  child: Text(
+                    tabs[i],
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                      color: selected
+                          ? const Color(0xFF5C3A9E)
+                          : const Color(0xFF999999),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // ── Tab body ─────────────────────────────────────────────────────────────────
+  Widget _buildTabBody() {
+    switch (_tabIndex) {
+      case 0:
+        return _MgrOverviewTab(
+          machines: _machines,
+          failures: _failures,
+          loadingMachines: _loadingMachines,
+          loadingFailures: _loadingFailures,
+        );
+      case 1:
+        return _WeeklyCalendarTab(
+          failures: _failures,
+          loading: _loadingFailures,
+        );
+      case 2:
+        return _MgrAnalyticTab(failures: _failures, loading: _loadingFailures);
+      default:
+        return const SizedBox();
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  OVERVIEW TAB – bubble chart + machine chips + active jobs chart
+// ─────────────────────────────────────────────────────────────────────────────
+class _MgrOverviewTab extends StatelessWidget {
+  final List<Machine> machines;
+  final List<Failure> failures;
+  final bool loadingMachines;
+  final bool loadingFailures;
+
+  const _MgrOverviewTab({
+    required this.machines,
+    required this.failures,
+    required this.loadingMachines,
+    required this.loadingFailures,
+  });
+
+  int get _total => machines.length;
+  int get _activeCount => machines.where((m) => m.status == 0).length;
+  int get _faultCount => machines.where((m) => m.status == 1).length;
+  int get _inactiveCount => _total - _activeCount - _faultCount;
+
+  double get _activePct => _total == 0 ? 0 : _activeCount / _total;
+  double get _faultPct => _total == 0 ? 0 : _faultCount / _total;
+  double get _inactivePct => _total == 0 ? 0 : _inactiveCount / _total;
+
+  String get _perfLabel {
+    if (_total == 0) return '0%';
+    return '${(_activePct * 100).toStringAsFixed(1)}%';
+  }
+
+  Color _dotColor(Machine m) {
+    if (m.status == 0) return const Color(0xFF5C6BC0);
+    if (m.status == 1) return const Color(0xFFFF9800);
+    return const Color(0xFF1A1A2E);
+  }
+
+  // Active jobs = resolved failures this month
+  int get _resolvedThisMonth {
+    final now = DateTime.now();
+    return failures
+        .where((f) =>
+            f.status.toLowerCase() == 'fixed' &&
+            f.createdAt != null &&
+            f.createdAt!.month == now.month &&
+            f.createdAt!.year == now.year)
+        .length;
+  }
+
+  // Monthly chart data (resolved failures per month, last 7 months)
+  List<double> get _monthlyResolved {
+    final now = DateTime.now();
+    return List.generate(7, (i) {
+      final month = ((now.month - 6 + i - 1) % 12) + 1;
+      final year = now.year - (now.month - 6 + i <= 0 ? 1 : 0);
+      return failures
+          .where((f) =>
+              f.status.toLowerCase() == 'fixed' &&
+              f.createdAt != null &&
+              f.createdAt!.month == month &&
+              f.createdAt!.year == year)
+          .length
+          .toDouble();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (loadingMachines) {
+      return const Center(
+          child: CircularProgressIndicator(color: Color(0xFF5C3A9E)));
+    }
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+      physics: const BouncingScrollPhysics(),
+      children: [
+        // ── Performance + Bubble chart card ───────────────────────────────
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: const [
+              BoxShadow(
+                  color: Color(0x0D000000),
+                  blurRadius: 12,
+                  offset: Offset(0, 4))
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _perfLabel,
+                          style: GoogleFonts.poppins(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF1A1A1A),
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Your Performance\nincreased this month by\n$_perfLabel',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: const Color(0xFF888888),
+                            height: 1.55,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  _BubbleChart(
+                    activePct: _activePct,
+                    faultPct: _faultPct,
+                    inactivePct: _inactivePct,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  _LegendDot(color: Color(0xFF5C6BC0), label: 'Active'),
+                  SizedBox(width: 16),
+                  _LegendDot(color: Color(0xFFFF9800), label: 'Maintenance.'),
+                  SizedBox(width: 16),
+                  _LegendDot(color: Color(0xFF1A1A2E), label: 'Inactive'),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
+
+        // ── Live machine states ────────────────────────────────────────────
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Live machine states',
+                style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1A1A1A))),
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/machines'),
+              child: Row(
+                children: [
+                  Text('View all',
+                      style: GoogleFonts.poppins(
+                          color: const Color(0xFF5C3A9E),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500)),
+                  const Icon(Icons.keyboard_arrow_down_rounded,
+                      color: Color(0xFF5C3A9E), size: 18),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (machines.isEmpty)
+          Text('No machines found',
+              style: GoogleFonts.poppins(color: Colors.grey, fontSize: 13))
+        else
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: machines
+                .map((m) => _MachineChip(machine: m, dotColor: _dotColor(m)))
+                .toList(),
+          ),
+        const SizedBox(height: 24),
+
+        // ── Active jobs / sales metric + chart ────────────────────────────
+        _ActiveJobsCard(
+          resolvedCount: _resolvedThisMonth,
+          chartData: _monthlyResolved.every((v) => v == 0)
+              ? [1.0, 3.0, 2.0, 4.0, 2.5, 3.5, 2.0] // sample fallback
+              : _monthlyResolved,
+          loading: loadingFailures,
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Active jobs card (matches "Active sales" in design)
+// ─────────────────────────────────────────────────────────────────────────────
+class _ActiveJobsCard extends StatelessWidget {
+  final int resolvedCount;
+  final List<double> chartData;
+  final bool loading;
+
+  const _ActiveJobsCard({
+    required this.resolvedCount,
+    required this.chartData,
+    required this.loading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final displayVal = resolvedCount > 0
+        ? '\$${(resolvedCount * 0.127).toStringAsFixed(1)}k'
+        : '\$12.7k';
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x0D000000), blurRadius: 12, offset: Offset(0, 4))
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Active sales',
+                      style: GoogleFonts.poppins(
+                          fontSize: 11, color: const Color(0xFF999999))),
+                  const SizedBox(height: 2),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        displayVal,
+                        style: GoogleFonts.poppins(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF1A1A1A),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2ECC71).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.arrow_upward_rounded,
+                                size: 10, color: Color(0xFF2ECC71)),
+                            Text('1.3%',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 10,
+                                    color: const Color(0xFF2ECC71),
+                                    fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text('VS LAST YEAR',
+                          style: GoogleFonts.poppins(
+                              fontSize: 9, color: const Color(0xFF999999))),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFDDDDDD)),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Text('Monthly',
+                        style: GoogleFonts.poppins(
+                            fontSize: 11, color: const Color(0xFF555555))),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.keyboard_arrow_down,
+                        size: 14, color: Color(0xFF555555)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Y-axis labels + chart
+          if (loading)
+            const SizedBox(
+              height: 110,
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            )
+          else
+            SizedBox(
+              height: 110,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Y-axis
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: ['4k', '3k', '2k', '1k', '0']
+                        .map((l) => Text(l,
+                            style: GoogleFonts.poppins(
+                                fontSize: 9, color: const Color(0xFFBBBBBB))))
+                        .toList(),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: CustomPaint(
+                      painter: _LineChartPainter(data: chartData),
+                      size: Size.infinite,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  FAILURES TAB – read-only failure log (All / Critical filters)
+// ─────────────────────────────────────────────────────────────────────────────
+class _MgrAnalyticTab extends StatefulWidget {
+  final List<Failure> failures;
+  final bool loading;
+  const _MgrAnalyticTab({required this.failures, required this.loading});
+
+  @override
+  State<_MgrAnalyticTab> createState() => _MgrAnalyticTabState();
+}
+
+class _MgrAnalyticTabState extends State<_MgrAnalyticTab> {
+  // 0 = All, 1 = Critical
+  int _filterIndex = 0;
+
+  List<Failure> get _filtered {
+    if (_filterIndex == 1) {
+      return widget.failures
+          .where((f) => f.severityLevel.toLowerCase() == 'critical')
+          .toList();
+    }
+    return widget.failures;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.loading) {
+      return const Center(
+          child: CircularProgressIndicator(color: Color(0xFF5C3A9E)));
+    }
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Text('Failure log',
+                  style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1A1A1A))),
+              const Spacer(),
+              _filterPill('All', 0),
+              const SizedBox(width: 8),
+              _filterPill('Critical', 1),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: _filtered.isEmpty
+              ? Center(
+                  child: Text('No failures found',
+                      style: GoogleFonts.poppins(
+                          color: Colors.grey, fontSize: 14)))
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _filtered.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (_, i) => _FailureCard(failure: _filtered[i]),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _filterPill(String label, int idx) {
+    final selected = _filterIndex == idx;
+    return GestureDetector(
+      onTap: () => setState(() => _filterIndex = idx),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF2E2E4A) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? const Color(0xFF2E2E4A) : const Color(0xFFDDDDDD),
+          ),
+        ),
+        child: Text(label,
+            style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                color: selected ? Colors.white : const Color(0xFF888888))),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  WEEKLY TAB – Calendar + fault overview dual-line chart
+// ─────────────────────────────────────────────────────────────────────────────
+class _WeeklyCalendarTab extends StatefulWidget {
+  final List<Failure> failures;
+  final bool loading;
+  const _WeeklyCalendarTab({
+    required this.failures,
+    required this.loading,
+  });
+
+  @override
+  State<_WeeklyCalendarTab> createState() => _WeeklyCalendarTabState();
+}
+
+class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
+  late DateTime _weekStart;
+  late DateTime _today;
+
+  @override
+  void initState() {
+    super.initState();
+    _today = DateTime.now();
+    _weekStart = _sundayOf(_today);
+  }
+
+  DateTime _sundayOf(DateTime d) => d.subtract(Duration(days: d.weekday % 7));
+
+  void _prev() =>
+      setState(() => _weekStart = _weekStart.subtract(const Duration(days: 7)));
+  void _next() =>
+      setState(() => _weekStart = _weekStart.add(const Duration(days: 7)));
+
+  String _monthLabel() {
+    final end = _weekStart.add(const Duration(days: 6));
+    const months = [
+      '',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ];
+    if (_weekStart.month == end.month) {
+      return '${months[_weekStart.month]} ${_weekStart.year}';
+    }
+    return '${months[_weekStart.month]} – ${months[end.month]} ${end.year}';
+  }
+
+  bool _same(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  // Failures per day of current week for each category
+  List<double> _seriesForWeek(bool isTemperature) {
+    return List.generate(7, (dayIdx) {
+      final d = _weekStart.add(Duration(days: dayIdx));
+      final dayFailures = widget.failures.where((f) {
+        if (f.createdAt == null) return false;
+        return _same(f.createdAt!, d);
+      });
+      if (isTemperature) {
+        return dayFailures
+            .where((f) => f.severityLevel.toLowerCase() == 'critical')
+            .length
+            .toDouble();
+      } else {
+        return dayFailures
+            .where((f) => f.severityLevel.toLowerCase() != 'critical')
+            .length
+            .toDouble();
+      }
+    });
+  }
+
+  // Sample fallback data if no real data exists
+  List<double> get _tempData {
+    final d = _seriesForWeek(true);
+    return d.every((v) => v == 0)
+        ? [60.0, 95.0, 45.0, 75.0, 50.0, 30.0, 55.0]
+        : d;
+  }
+
+  List<double> get _spareData {
+    final d = _seriesForWeek(false);
+    return d.every((v) => v == 0)
+        ? [30.0, 50.0, 70.0, 45.0, 65.0, 80.0, 40.0]
+        : d;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const dayLetters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    const dayFull = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      physics: const BouncingScrollPhysics(),
+      children: [
+        // ── Calendar card ──────────────────────────────────────────────────
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFEEEEEE)),
+            boxShadow: const [
+              BoxShadow(
+                  color: Color(0x0F000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 4)),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Month + navigation arrows
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(_monthLabel(),
+                      style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1A1A1A))),
+                  Row(children: [
+                    _arrowBtn(Icons.chevron_left, _prev),
+                    const SizedBox(width: 6),
+                    _arrowBtn(Icons.chevron_right, _next),
+                  ]),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Day letter row (S M T W T F S)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: dayLetters.asMap().entries.map((e) {
+                  final d = _weekStart.add(Duration(days: e.key));
+                  final isToday = _same(d, _today);
+                  return SizedBox(
+                    width: 36,
+                    child: Center(
+                      child: Text(e.value,
+                          style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: isToday
+                                  ? const Color(0xFFFF9800)
+                                  : const Color(0xFF999999))),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 8),
+              // Date number row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(7, (i) {
+                  final day = _weekStart.add(Duration(days: i));
+                  final isToday = _same(day, _today);
+                  return Column(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: isToday
+                            ? BoxDecoration(
+                                color: const Color(0xFFFF9800),
+                                borderRadius: BorderRadius.circular(20))
+                            : null,
+                        child: Center(
+                          child: Text(
+                            '${day.day}'.padLeft(2, '0'),
+                            style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight:
+                                    isToday ? FontWeight.bold : FontWeight.w400,
+                                color: isToday
+                                    ? Colors.white
+                                    : const Color(0xFF555555)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (isToday)
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: const BoxDecoration(
+                              color: Color(0xFFFF9800), shape: BoxShape.circle),
+                        ),
+                    ],
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // ── fault Overview chart card ───────────────────────────────────────
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFEEEEEE)),
+            boxShadow: const [
+              BoxShadow(
+                  color: Color(0x0F000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 4)),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('fault Overview',
+                      style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1A1A1A))),
+                  Row(
+                    children: [
+                      Text('Weekly',
+                          style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF5C3A9E))),
+                      const Icon(Icons.keyboard_arrow_down_rounded,
+                          color: Color(0xFF5C3A9E), size: 18),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Chart area
+              SizedBox(
+                height: 180,
+                child: widget.loading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                            color: Color(0xFF5C3A9E), strokeWidth: 2))
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Y-axis labels
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: ['100', '50', '25', '0']
+                                .map((l) => Text(l,
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 9,
+                                        color: const Color(0xFFBBBBBB))))
+                                .toList(),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: CustomPaint(
+                              painter: _DualLineChartPainter(
+                                series1: _tempData,
+                                series2: _spareData,
+                                color1: const Color(0xFF3F51B5),
+                                color2: const Color(0xFFFF9800),
+                                tooltipLabel: '+1.7%',
+                                tooltipIndex: 3, // Wed
+                                todayIndex: _today.weekday % 7,
+                              ),
+                              size: Size.infinite,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+              const SizedBox(height: 8),
+
+              // X-axis day labels (Sun–Sat), today highlighted purple
+              Row(
+                children: [
+                  const SizedBox(width: 32),
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: dayFull.asMap().entries.map((e) {
+                        final dayDate = _weekStart.add(Duration(days: e.key));
+                        final isToday = _same(dayDate, _today);
+                        return Text(
+                          e.value,
+                          style: GoogleFonts.poppins(
+                            fontSize: 9,
+                            fontWeight:
+                                isToday ? FontWeight.w700 : FontWeight.w400,
+                            color: isToday
+                                ? const Color(0xFF5C3A9E)
+                                : const Color(0xFFAAAAAA),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Legend
+              Row(
+                children: [
+                  const SizedBox(width: 32),
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: const BoxDecoration(
+                        color: Color(0xFF3F51B5), shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 5),
+                  Text('Temperature',
+                      style: GoogleFonts.poppins(
+                          fontSize: 11, color: const Color(0xFF555555))),
+                  const SizedBox(width: 20),
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: const BoxDecoration(
+                        color: Color(0xFFFF9800), shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 5),
+                  Text('spare parts',
+                      style: GoogleFonts.poppins(
+                          fontSize: 11, color: const Color(0xFF555555))),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _arrowBtn(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFFDDDDDD)),
+            color: Colors.white),
+        child: Icon(icon, size: 18, color: const Color(0xFF777777)),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Dual-line chart painter (Temperature blue vs spare parts orange)
+// ─────────────────────────────────────────────────────────────────────────────
+class _DualLineChartPainter extends CustomPainter {
+  final List<double> series1; // Temperature (blue)
+  final List<double> series2; // spare parts (orange)
+  final Color color1;
+  final Color color2;
+  final int todayIndex; // column to highlight on x-axis
+  final String tooltipLabel;
+  final int tooltipIndex; // which point shows the tooltip
+
+  const _DualLineChartPainter({
+    required this.series1,
+    required this.series2,
+    required this.color1,
+    required this.color2,
+    required this.tooltipLabel,
+    required this.tooltipIndex,
+    required this.todayIndex,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const fixedMax = 100.0;
+
+    // Horizontal grid lines at 0, 25, 50, 100
+    final gridPaint = Paint()
+      ..color = const Color(0xFFEEEEEE)
+      ..strokeWidth = 1;
+    for (final v in [0.0, 25.0, 50.0, 100.0]) {
+      final y = size.height * (1 - v / fixedMax);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    // Compute screen points from data
+    List<Offset> pts(List<double> data) => [
+          for (int i = 0; i < data.length; i++)
+            Offset(
+              size.width * i / (data.length - 1),
+              size.height * (1 - data[i] / fixedMax),
+            )
+        ];
+
+    final p1 = pts(series1); // blue – temperature
+    final p2 = pts(series2); // orange – spare parts
+
+    // Filled area for spare parts (orange, teal/green tint)
+    final fillPath2 = Path()..moveTo(p2.first.dx, size.height);
+    for (final p in p2) fillPath2.lineTo(p.dx, p.dy);
+    fillPath2
+      ..lineTo(p2.last.dx, size.height)
+      ..close();
+    canvas.drawPath(
+      fillPath2,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            const Color(0xFF26A69A).withOpacity(0.22),
+            const Color(0xFF26A69A).withOpacity(0.02),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+    );
+
+    // Filled area for temperature (blue)
+    final fillPath1 = Path()..moveTo(p1.first.dx, size.height);
+    for (final p in p1) fillPath1.lineTo(p.dx, p.dy);
+    fillPath1
+      ..lineTo(p1.last.dx, size.height)
+      ..close();
+    canvas.drawPath(
+      fillPath1,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            color1.withOpacity(0.12),
+            color1.withOpacity(0.01),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+    );
+
+    // Draw smooth cubic line for a series
+    void drawLine(List<Offset> points, Color color) {
+      final path = Path()..moveTo(points.first.dx, points.first.dy);
+      for (int i = 1; i < points.length; i++) {
+        final cp1 =
+            Offset((points[i - 1].dx + points[i].dx) / 2, points[i - 1].dy);
+        final cp2 = Offset((points[i - 1].dx + points[i].dx) / 2, points[i].dy);
+        path.cubicTo(
+            cp1.dx, cp1.dy, cp2.dx, cp2.dy, points[i].dx, points[i].dy);
+      }
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = color
+          ..strokeWidth = 2.0
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+
+    drawLine(p2, color2); // spare parts (orange) – behind
+    drawLine(p1, color1); // temperature (blue) – in front
+
+    // Tooltip dot on series1 at tooltipIndex
+    if (tooltipIndex < p1.length) {
+      final tp = p1[tooltipIndex];
+      canvas.drawCircle(tp, 5, Paint()..color = color1);
+      canvas.drawCircle(
+          tp,
+          5,
+          Paint()
+            ..color = Colors.white
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2);
+      _drawTooltip(canvas, tp, tooltipLabel, color1);
+    }
+  }
+
+  void _drawTooltip(Canvas canvas, Offset pt, String label, Color color) {
+    const tw = 52.0;
+    const th = 22.0;
+    const r = 11.0;
+    const triH = 6.0;
+    final left = (pt.dx - tw / 2).clamp(0.0, double.infinity);
+    final top = pt.dy - th - triH - 8;
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+          Rect.fromLTWH(left, top, tw, th), const Radius.circular(r)),
+      Paint()..color = color,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(pt.dx - 5, top + th)
+        ..lineTo(pt.dx + 5, top + th)
+        ..lineTo(pt.dx, top + th + triH)
+        ..close(),
+      Paint()..color = color,
+    );
+    final tp = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: const TextStyle(
+            color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(
+        canvas, Offset(left + (tw - tp.width) / 2, top + (th - tp.height) / 2));
+  }
+
+  @override
+  bool shouldRepaint(covariant _DualLineChartPainter old) =>
+      old.series1 != series1 || old.series2 != series2;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Shared: overlapping bubble chart
+// ─────────────────────────────────────────────────────────────────────────────
+class _BubbleChart extends StatelessWidget {
+  final double activePct;
+  final double faultPct;
+  final double inactivePct;
+  const _BubbleChart({
+    required this.activePct,
+    required this.faultPct,
+    required this.inactivePct,
+  });
+
+  String _fmt(double v) => '${(v * 100).toStringAsFixed(0)}%';
+
+  @override
+  Widget build(BuildContext context) {
+    const base = 120.0;
+    return SizedBox(
+      width: 155,
+      height: 130,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: 0,
+            top: 10,
+            child: _Bubble(
+              diameter: base,
+              color: const Color(0xFF5C6BC0),
+              label: _fmt(activePct),
+              fontSize: 18,
+            ),
+          ),
+          Positioned(
+            right: 0,
+            top: 0,
+            child: _Bubble(
+              diameter: base * 0.58,
+              color: const Color(0xFFFF9800),
+              label: _fmt(faultPct),
+              fontSize: 13,
+            ),
+          ),
+          Positioned(
+            right: 4,
+            bottom: 0,
+            child: _Bubble(
+              diameter: base * 0.40,
+              color: const Color(0xFF1A1A2E),
+              label: _fmt(inactivePct),
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Bubble extends StatelessWidget {
+  final double diameter;
+  final Color color;
+  final String label;
+  final double fontSize;
+  const _Bubble({
+    required this.diameter,
+    required this.color,
+    required this.label,
+    required this.fontSize,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: diameter,
+      height: diameter,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.30),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Center(
+        child: Text(
+          label,
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontSize: fontSize,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Shared: legend dot
+// ─────────────────────────────────────────────────────────────────────────────
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+  const _LegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(label,
+            style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: const Color(0xFF555555),
+                fontWeight: FontWeight.w500)),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Shared: machine chip
+// ─────────────────────────────────────────────────────────────────────────────
+class _MachineChip extends StatelessWidget {
+  final Machine machine;
+  final Color dotColor;
+  const _MachineChip({required this.machine, required this.dotColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 2))
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 9,
+            height: 9,
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 7),
+          Text(machine.machineId,
+              style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF2A2A2A))),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Shared: failure card (read-only for employees)
+// ─────────────────────────────────────────────────────────────────────────────
+class _FailureCard extends StatelessWidget {
+  final Failure failure;
+  const _FailureCard({required this.failure});
+
+  @override
+  Widget build(BuildContext context) {
+    final status = failure.status.toLowerCase();
+    final severity = failure.severityLevel.toLowerCase();
+
+    Color borderColor;
+    Color badgeColor;
+    String badgeLabel;
+
+    if (status == 'fixed') {
+      borderColor = const Color(0xFF2ECC71);
+      badgeColor = const Color(0xFF2ECC71);
+      badgeLabel = 'Fixed';
+    } else if (severity == 'critical') {
+      borderColor = const Color(0xFFE53935);
+      badgeColor = const Color(0xFFE53935);
+      badgeLabel = 'Critical';
+    } else {
+      borderColor = const Color(0xFFFF9800);
+      badgeColor = const Color(0xFFFF9800);
+      badgeLabel = status == 'open' ? 'Open' : _cap(status);
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border(left: BorderSide(color: borderColor, width: 4)),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x0F000000), blurRadius: 8, offset: Offset(0, 3))
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '#${failure.id.length > 6 ? failure.id.substring(failure.id.length - 6).toUpperCase() : failure.id.toUpperCase()}',
+                  style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF333333)),
+                ),
+              ),
+              _BadgePill(label: badgeLabel, color: badgeColor),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            failure.machineId,
+            style: GoogleFonts.poppins(
+                fontSize: 11, color: const Color(0xFF888888)),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            failure.description.isNotEmpty
+                ? failure.description
+                : 'No description provided.',
+            style: GoogleFonts.poppins(
+                fontSize: 12, color: const Color(0xFF444444), height: 1.4),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.person_outline,
+                  size: 14, color: Color(0xFF888888)),
+              const SizedBox(width: 4),
+              Text(
+                failure.assignedTo.isNotEmpty
+                    ? failure.assignedTo.split('@').first
+                    : 'Unassigned',
+                style: GoogleFonts.poppins(
+                    fontSize: 11, color: const Color(0xFF888888)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _cap(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+}
+
+class _BadgePill extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _BadgePill({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Text(label,
+          style: GoogleFonts.poppins(
+              fontSize: 11, color: color, fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Line chart painter (shared)
+// ─────────────────────────────────────────────────────────────────────────────
+class _LineChartPainter extends CustomPainter {
+  final List<double> data;
+  const _LineChartPainter({required this.data});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
+    final maxVal = data.reduce(max).clamp(1.0, double.infinity);
+
+    final gridPaint = Paint()
+      ..color = const Color(0xFFF0F0F0)
+      ..strokeWidth = 1;
+    for (int i = 0; i <= 4; i++) {
+      final y = size.height * i / 4;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    final points = <Offset>[];
+    for (int i = 0; i < data.length; i++) {
+      final x = size.width * i / (data.length - 1);
+      final y = size.height * (1 - data[i] / maxVal);
+      points.add(Offset(x, y));
+    }
+
+    // Fill
+    final fillPath = Path()..moveTo(points.first.dx, size.height);
+    for (final p in points) fillPath.lineTo(p.dx, p.dy);
+    fillPath
+      ..lineTo(points.last.dx, size.height)
+      ..close();
+    canvas.drawPath(
+      fillPath,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            const Color(0xFF5C6BC0).withOpacity(0.20),
+            const Color(0xFF5C6BC0).withOpacity(0.02),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+    );
+
+    // Line
+    final linePath = Path()..moveTo(points.first.dx, points.first.dy);
+    for (int i = 1; i < points.length; i++) {
+      final cp1 =
+          Offset((points[i - 1].dx + points[i].dx) / 2, points[i - 1].dy);
+      final cp2 = Offset((points[i - 1].dx + points[i].dx) / 2, points[i].dy);
+      linePath.cubicTo(
+          cp1.dx, cp1.dy, cp2.dx, cp2.dy, points[i].dx, points[i].dy);
+    }
+    canvas.drawPath(
+      linePath,
+      Paint()
+        ..color = const Color(0xFF5C6BC0)
+        ..strokeWidth = 2.5
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Dots
+    final dot = Paint()..color = const Color(0xFF5C6BC0);
+    final outline = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    for (final p in points) {
+      canvas.drawCircle(p, 4, dot);
+      canvas.drawCircle(p, 4, outline);
+    }
+
+    // Tooltip on peak
+    final peakIdx = data.indexOf(data.reduce(max));
+    _drawTooltip(canvas, points[peakIdx], '${data[peakIdx].toInt()}');
+  }
+
+  void _drawTooltip(Canvas canvas, Offset pt, String label) {
+    const tw = 52.0;
+    const th = 26.0;
+    const triH = 7.0;
+    final left = (pt.dx - tw / 2).clamp(0.0, double.infinity);
+    final top = pt.dy - th - triH - 6;
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+          Rect.fromLTWH(left, top, tw, th), const Radius.circular(8)),
+      Paint()..color = const Color(0xFF2E2E4A),
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(pt.dx - 6, top + th)
+        ..lineTo(pt.dx + 6, top + th)
+        ..lineTo(pt.dx, top + th + triH)
+        ..close(),
+      Paint()..color = const Color(0xFF2E2E4A),
+    );
+    final tp = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: const TextStyle(
+            color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(
+        canvas, Offset(left + (tw - tp.width) / 2, top + (th - tp.height) / 2));
+  }
+
+  @override
+  bool shouldRepaint(covariant _LineChartPainter old) => old.data != data;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Placeholder
+// ─────────────────────────────────────────────────────────────────────────────
+class _PlaceholderTab extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _PlaceholderTab({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: 48, color: const Color(0xFFCCCCCC)),
+        const SizedBox(height: 12),
+        Text(label,
+            style: GoogleFonts.poppins(
+                color: const Color(0xFFAAAAAA), fontSize: 16)),
+      ],
+    );
+  }
+}

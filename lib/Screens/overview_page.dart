@@ -256,10 +256,11 @@ class _LinePainter extends CustomPainter {
           sin(i / 12 * 2 * pi) *
               (size.height / 3) *
               (0.6 + rng.nextDouble() * 0.6);
-      if (i == 0)
+      if (i == 0) {
         path.moveTo(x, y);
-      else
+      } else {
         path.lineTo(x, y);
+      }
     }
     canvas.drawPath(path, paint);
 

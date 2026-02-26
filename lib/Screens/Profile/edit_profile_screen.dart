@@ -49,7 +49,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Wrap(
             children: [
               ListTile(
-                leading: const Icon(Icons.photo_library, color: AppColors.primaryOrange),
+                leading: const Icon(Icons.photo_library,
+                    color: AppColors.primaryOrange),
                 title: Text('Gallery', style: TextStyle(color: textColor)),
                 onTap: () {
                   Navigator.of(context).pop();
@@ -57,7 +58,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.camera_alt, color: AppColors.primaryOrange),
+                leading: const Icon(Icons.camera_alt,
+                    color: AppColors.primaryOrange),
                 title: Text('Camera', style: TextStyle(color: textColor)),
                 onTap: () {
                   Navigator.of(context).pop();
@@ -88,7 +90,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // Handle any errors here (e.g., permission denied)
       print("Error picking image: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to pick image. Check permissions.')),
+        const SnackBar(
+            content: Text('Failed to pick image. Check permissions.')),
       );
     }
   }
@@ -103,21 +106,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         return Theme(
           data: isDarkMode
               ? ThemeData.dark().copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.primaryOrange,
-              onPrimary: Colors.white,
-              onSurface: Colors.white,
-              surface: Color(0xFF1E1E1E),
-            ),
-            dialogBackgroundColor: const Color(0xFF1E1E1E),
-          )
+                  colorScheme: const ColorScheme.dark(
+                    primary: AppColors.primaryOrange,
+                    onPrimary: Colors.white,
+                    onSurface: Colors.white,
+                    surface: Color(0xFF1E1E1E),
+                  ),
+                  dialogTheme:
+                      DialogThemeData(backgroundColor: const Color(0xFF1E1E1E)),
+                )
               : ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primaryOrange,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
+                  colorScheme: const ColorScheme.light(
+                    primary: AppColors.primaryOrange,
+                    onPrimary: Colors.white,
+                    onSurface: Colors.black,
+                  ),
+                ),
           child: child!,
         );
       },
@@ -125,14 +129,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     if (picked != null) {
       setState(() {
-        _dateController.text = "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
+        _dateController.text =
+            "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final initialName = args?['name'] ?? "Jessica Jung";
     final initialEmail = args?['email'] ?? "jessica@example.com";
     final isDarkMode = args?['isDarkMode'] ?? true;
@@ -151,7 +157,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             height: 280,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.splashGradientStart, AppColors.splashGradientEnd],
+                colors: [
+                  AppColors.splashGradientStart,
+                  AppColors.splashGradientEnd
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -203,18 +212,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       label: "Full Name",
                       textColor: textColor,
                       inputColor: inputTextColor,
-                      initialValue: initialName
-                  ),
+                      initialValue: initialName),
                   const SizedBox(height: 20),
-
                   _buildTextField(
                       label: "Email",
                       textColor: textColor,
                       inputColor: inputTextColor,
-                      initialValue: initialEmail
-                  ),
+                      initialValue: initialEmail),
                   const SizedBox(height: 20),
-
                   _buildTextField(
                     label: "Date Of Birth",
                     textColor: textColor,
@@ -224,9 +229,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     isReadOnly: true,
                     onTap: () => _selectDate(context, isDarkMode),
                   ),
-
                   const SizedBox(height: 40),
-
                   SizedBox(
                     width: double.infinity,
                     height: 55,
@@ -247,7 +250,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                       child: const Text(
                         "Save Changes",
-                        style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -292,7 +298,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           color: AppColors.primaryOrange,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                        child: const Icon(Icons.camera_alt,
+                            color: Colors.white, size: 20),
                       ),
                     ),
                   )
@@ -334,7 +341,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           onTap: onTap,
           style: TextStyle(color: inputColor),
           decoration: InputDecoration(
-            suffixIcon: icon != null ? Icon(icon, color: AppColors.primaryOrange) : null,
+            suffixIcon: icon != null
+                ? Icon(icon, color: AppColors.primaryOrange)
+                : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(15),
               borderSide: const BorderSide(color: Colors.grey),

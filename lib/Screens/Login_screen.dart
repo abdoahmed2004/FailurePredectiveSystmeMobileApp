@@ -64,7 +64,8 @@ class _LoginScreenState extends State<LoginScreen> {
         '/home',
         (route) => false,
         arguments: {
-          'userRole': response.user.role, // Pass the user role
+          'userRole': response.user.role,
+          'userName': response.user.fullName,
         },
       );
 
@@ -94,36 +95,26 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Back icon and Register button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        // Optional: Pop navigation stack if not root
-                        Navigator.pop(context);
-                      },
-                      icon: const Icon(Icons.arrow_back_ios_new,
-                          color: Colors.white70, size: 20),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        // Navigate to the RegistrationScreen
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const RegisterScreen(),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        "Register",
-                        style: GoogleFonts.poppins(
-                          color: const Color(0xFFFF9800),
-                          fontWeight: FontWeight.w500,
+                // Register button
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      // Navigate to the RegistrationScreen
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterScreen(),
                         ),
+                      );
+                    },
+                    child: Text(
+                      "Register",
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFFFF9800),
+                        fontWeight: FontWeight.w500,
                       ),
-                    )
-                  ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 40),
                 // Welcome text

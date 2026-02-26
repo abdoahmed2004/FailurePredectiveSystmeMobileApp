@@ -39,7 +39,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
 
       final user = await _authService.getPersonalInfo();
-      
+
       if (mounted) {
         setState(() {
           _user = user;
@@ -87,7 +87,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       final message = await _authService.logout();
-      
+
       if (mounted) {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -97,7 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             duration: const Duration(seconds: 2),
           ),
         );
-        
+
         // Navigate to login and clear all routes
         Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
       }
@@ -106,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() {
           _isLoggingOut = false;
         });
-        
+
         // Still navigate to login even if API fails (token is cleared locally)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -115,7 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             duration: const Duration(seconds: 3),
           ),
         );
-        
+
         Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
       }
     }
@@ -125,8 +125,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     // Determine text colors based on the PASSED theme
     final textColor = widget.isDarkMode ? Colors.white : Colors.black;
-    final subTextColor = widget.isDarkMode ? Colors.white70 : AppColors.textGrey;
-    final cardColor = widget.isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+    final subTextColor =
+        widget.isDarkMode ? Colors.white70 : AppColors.textGrey;
+    final cardColor =
+        widget.isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -138,11 +140,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+                        Icon(Icons.error_outline,
+                            size: 64, color: Colors.red[300]),
                         const SizedBox(height: 16),
                         Text(
                           'Error loading profile',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textColor),
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: textColor),
                         ),
                         const SizedBox(height: 8),
                         Padding(
@@ -162,140 +168,153 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   )
                 : SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Profile",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryOrange,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 30,
-                      backgroundImage: AssetImage('assets/images/onboarding_1.png'),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _user?.fullName ?? 'Loading...',
-                            style: const TextStyle(
-                              color: Colors.white,
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Profile",
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryOrange,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              const CircleAvatar(
+                                radius: 30,
+                                backgroundImage: AssetImage(
+                                    'assets/images/onboarding_1.png'),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _user?.fullName ?? 'Loading...',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _user?.email ?? 'Loading...',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Text(
+                                      _user?.role ?? 'Loading...',
+                                      style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                          fontStyle: FontStyle.italic),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined,
+                                    color: Colors.white),
+                                onPressed: () {
+                                  if (_user != null) {
+                                    Navigator.pushNamed(
+                                        context, '/edit-profile',
+                                        arguments: {
+                                          'name': _user!.fullName,
+                                          'email': _user!.email,
+                                          // === FIX 1: PASS THE THEME STATE ===
+                                          'isDarkMode': widget.isDarkMode,
+                                        });
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        _buildMenuItem(
+                          icon: Icons.person_outline,
+                          title: "My Account",
+                          subtitle: "Make changes to your account",
+                          showWarning: true,
+                          textColor: textColor,
+                          subTextColor: subTextColor,
+                          cardColor: cardColor,
+                          onTap: () {},
+                        ),
+                        _buildMenuItem(
+                          icon: Icons.lock_outline,
+                          title: "Change Password",
+                          subtitle: "Change Your password",
+                          textColor: textColor,
+                          subTextColor: subTextColor,
+                          cardColor: cardColor,
+                          onTap: () {
+                            Navigator.pushNamed(context, '/change-password',
+                                arguments: {
+                                  // === FIX 1: PASS THE THEME STATE ===
+                                  'isDarkMode': widget.isDarkMode,
+                                });
+                          },
+                        ),
+                        _buildMenuItem(
+                          icon: Icons.dark_mode_outlined,
+                          title: "Dark/Light Mode",
+                          subtitle: "Manage Your Interface",
+                          isSwitch: true,
+                          textColor: textColor,
+                          subTextColor: subTextColor,
+                          cardColor: cardColor,
+                          onTap: () {},
+                        ),
+                        _buildMenuItem(
+                          icon: Icons.logout,
+                          title: "Log out",
+                          subtitle: _isLoggingOut
+                              ? "Logging out..."
+                              : "Securely log out of account",
+                          isLogout: true,
+                          isLoading: _isLoggingOut,
+                          textColor: textColor,
+                          subTextColor: subTextColor,
+                          cardColor: cardColor,
+                          onTap: _isLoggingOut ? null : _logout,
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          "More",
+                          style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _user?.email ?? 'Loading...',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                            ),
-                          ),
-                          Text(
-                            _user?.role ?? 'Loading...',
-                            style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                                fontStyle: FontStyle.italic
-                            ),
-                          ),
-                        ],
-                      ),
+                              color: textColor),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildSimpleMenuItem(
+                            icon: Icons.help_outline,
+                            title: "Help & Support",
+                            textColor: textColor,
+                            cardColor: cardColor),
+                        _buildSimpleMenuItem(
+                            icon: Icons.favorite_border,
+                            title: "About App",
+                            textColor: textColor,
+                            cardColor: cardColor),
+                      ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined, color: Colors.white),
-                      onPressed: () {
-                        if (_user != null) {
-                          Navigator.pushNamed(context, '/edit-profile', arguments: {
-                            'name': _user!.fullName,
-                            'email': _user!.email,
-                            // === FIX 1: PASS THE THEME STATE ===
-                            'isDarkMode': widget.isDarkMode,
-                          });
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
-
-              _buildMenuItem(
-                icon: Icons.person_outline,
-                title: "My Account",
-                subtitle: "Make changes to your account",
-                showWarning: true,
-                textColor: textColor,
-                subTextColor: subTextColor,
-                cardColor: cardColor,
-                onTap: () {},
-              ),
-              _buildMenuItem(
-                icon: Icons.lock_outline,
-                title: "Change Password",
-                subtitle: "Change Your password",
-                textColor: textColor,
-                subTextColor: subTextColor,
-                cardColor: cardColor,
-                onTap: () {
-                  Navigator.pushNamed(context, '/change-password', arguments: {
-                    // === FIX 1: PASS THE THEME STATE ===
-                    'isDarkMode': widget.isDarkMode,
-                  });
-                },
-              ),
-              _buildMenuItem(
-                icon: Icons.dark_mode_outlined,
-                title: "Dark/Light Mode",
-                subtitle: "Manage Your Interface",
-                isSwitch: true,
-                textColor: textColor,
-                subTextColor: subTextColor,
-                cardColor: cardColor,
-                onTap: () {},
-              ),
-              _buildMenuItem(
-                icon: Icons.logout,
-                title: "Log out",
-                subtitle: _isLoggingOut ? "Logging out..." : "Securely log out of account",
-                isLogout: true,
-                isLoading: _isLoggingOut,
-                textColor: textColor,
-                subTextColor: subTextColor,
-                cardColor: cardColor,
-                onTap: _isLoggingOut ? null : _logout,
-              ),
-
-              const SizedBox(height: 20),
-              Text(
-                "More",
-                style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
-              ),
-              const SizedBox(height: 10),
-              _buildSimpleMenuItem(icon: Icons.help_outline, title: "Help & Support", textColor: textColor, cardColor: cardColor),
-              _buildSimpleMenuItem(icon: Icons.favorite_border, title: "About App", textColor: textColor, cardColor: cardColor),
-            ],
-          ),
-        ),
+                  ),
       ),
     );
   }
@@ -324,7 +343,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: isLogout ? const Color(0xFFFFF5F5) : AppColors.lightOrange,
+                color:
+                    isLogout ? const Color(0xFFFFF5F5) : AppColors.lightOrange,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -360,12 +380,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (showWarning)
               const Padding(
                 padding: EdgeInsets.only(right: 8.0),
-                child: Icon(Icons.warning_amber_rounded, color: AppColors.redAlert, size: 20),
+                child: Icon(Icons.warning_amber_rounded,
+                    color: AppColors.redAlert, size: 20),
               ),
             if (isSwitch)
               CupertinoSwitch(
                 value: widget.isDarkMode,
-                activeColor: AppColors.primaryOrange,
+                activeTrackColor: AppColors.primaryOrange,
                 onChanged: widget.onThemeChanged,
               )
             else if (isLoading)
