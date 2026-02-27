@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
         primaryColor: AppColors.appWhite,
         textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
       ),
-      initialRoute: '/engineer-preview',
+      initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
