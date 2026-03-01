@@ -18,20 +18,13 @@ class _HomePageState extends State<HomePage> {
   int bottomIndex = 0;
   int topTabIndex = 0; // 0 Overview, 1 Weekly, 2 Failures
 
-  // Theme State
-  bool isDarkMode = true; // Default is Dark
+  bool get isDarkMode => true;
 
   final pages = [
     'Overview',
     'Weekly',
     'Failures',
   ];
-
-  void _toggleTheme(bool value) {
-    setState(() {
-      isDarkMode = value;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,11 +62,7 @@ class _HomePageState extends State<HomePage> {
                     ))),
 
             // Index 3: Profile Screen
-            // We pass the state and the function down to the profile
-            ProfileScreen(
-              isDarkMode: isDarkMode,
-              onThemeChanged: _toggleTheme,
-            ),
+            const ProfileScreen(),
           ],
         ),
       ),

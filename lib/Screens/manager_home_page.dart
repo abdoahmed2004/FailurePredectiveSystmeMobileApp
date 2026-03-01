@@ -1,6 +1,9 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:fpms_app/core/theme/app_theme.dart';
+import 'package:fpms_app/core/theme/theme_controller.dart';
+
 import '../Services/auth_service.dart';
 import '../Models/machine_model.dart';
 import '../Models/failure_model.dart';
@@ -19,14 +22,11 @@ class ManagerHomePage extends StatefulWidget {
 
 class _ManagerHomePageState extends State<ManagerHomePage> {
   int _bottomIndex = 0;
-  bool isDarkMode = true;
-
-  void _toggleTheme(bool v) => setState(() => isDarkMode = v);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.cs.surface,
       body: SafeArea(
         child: IndexedStack(
           index: _bottomIndex,
@@ -38,7 +38,7 @@ class _ManagerHomePageState extends State<ManagerHomePage> {
             const Center(
                 child: _PlaceholderTab(
                     icon: Icons.schedule_outlined, label: 'Schedule')),
-            ProfileScreen(isDarkMode: isDarkMode, onThemeChanged: _toggleTheme),
+            const ProfileScreen(),
           ],
         ),
       ),
@@ -56,10 +56,10 @@ class _ManagerHomePageState extends State<ManagerHomePage> {
 
     return Container(
       height: 72,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: context.cs.surface,
+        border: Border(top: BorderSide(color: context.cs.outline)),
         boxShadow: [
           BoxShadow(
               color: Color(0x14000000), blurRadius: 12, offset: Offset(0, -4)),
@@ -83,14 +83,14 @@ class _ManagerHomePageState extends State<ManagerHomePage> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF5C3A9E),
+                      color: Color(0xFF5C3A9E),
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Row(
                       children: [
                         Image.asset(iconPath,
                             width: 20, height: 20, color: Colors.white),
-                        const SizedBox(width: 6),
+                        SizedBox(width: 6),
                         Text(label,
                             style: GoogleFonts.poppins(
                                 color: Colors.white,
@@ -101,7 +101,9 @@ class _ManagerHomePageState extends State<ManagerHomePage> {
                   )
                 else
                   Image.asset(iconPath,
-                      width: 24, height: 24, color: const Color(0xFFAAAAAA)),
+                      width: 24,
+                      height: 24,
+                      color: context.cs.onSurfaceVariant),
                 if (selected) ...[
                   const SizedBox(height: 3),
                   Container(
@@ -177,7 +179,7 @@ class _ManagerMainContentState extends State<_ManagerMainContent> {
         // ── White body: tabs + content ─────────────────────────────────────
         Expanded(
           child: Container(
-            color: Colors.white,
+            color: context.cs.surface,
             child: Column(
               children: [
                 const SizedBox(height: 18),
@@ -210,8 +212,7 @@ class _ManagerMainContentState extends State<_ManagerMainContent> {
             padding: const EdgeInsets.fromLTRB(18, 10, 18, 12),
             child: Row(
               children: [
-                const Icon(Icons.grid_view_rounded,
-                    color: Colors.white70, size: 22),
+                Icon(Icons.grid_view_rounded, color: Colors.white70, size: 22),
                 Expanded(
                   child: Center(
                     child: Text(
@@ -267,7 +268,7 @@ class _ManagerMainContentState extends State<_ManagerMainContent> {
               height: 90,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.08),
+                color: context.cs.surface.withOpacity(0.08),
               ),
             ),
           ),
@@ -344,10 +345,10 @@ class _ManagerMainContentState extends State<_ManagerMainContent> {
         _failures.isEmpty ? [5.0, 12.0, 8.0, 18.0, 22.0, 15.0, 10.0] : counts;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cs.surface,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -368,32 +369,31 @@ class _ManagerMainContentState extends State<_ManagerMainContent> {
                 children: [
                   Text('Failures',
                       style: GoogleFonts.poppins(
-                          color: const Color(0xFF888888), fontSize: 12)),
+                          color: context.cs.onSurfaceVariant, fontSize: 12)),
                   Text(
                     '${_failures.isEmpty ? 23 : _failures.length}',
                     style: GoogleFonts.poppins(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1A1A1A),
+                      color: context.cs.onSurface,
                     ),
                   ),
                 ],
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFDDDDDD)),
+                  border: Border.all(color: context.cs.outline),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   children: [
                     Text('Monthly',
                         style: GoogleFonts.poppins(
-                            fontSize: 11, color: const Color(0xFF555555))),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down,
-                        size: 14, color: Color(0xFF555555)),
+                            fontSize: 11, color: context.cs.onSurfaceVariant)),
+                    SizedBox(width: 4),
+                    Icon(Icons.keyboard_arrow_down,
+                        size: 14, color: context.cs.onSurfaceVariant),
                   ],
                 ),
               ),
@@ -407,14 +407,14 @@ class _ManagerMainContentState extends State<_ManagerMainContent> {
               size: Size.infinite,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: monthLabels
                 .map((m) => Text(m,
                     style: GoogleFonts.poppins(
                         fontSize: 9,
-                        color: const Color(0xFF999999),
+                        color: context.cs.onSurfaceVariant,
                         fontWeight: FontWeight.w500)))
                 .toList(),
           ),
@@ -435,14 +435,13 @@ class _ManagerMainContentState extends State<_ManagerMainContent> {
             child: GestureDetector(
               onTap: () => setState(() => _tabIndex = i),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                duration: Duration(milliseconds: 200),
+                padding: EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   color: selected ? Colors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(30),
-                  border: selected
-                      ? Border.all(color: const Color(0xFFDDDDDD))
-                      : null,
+                  border:
+                      selected ? Border.all(color: context.cs.outline) : null,
                   boxShadow: selected
                       ? [
                           const BoxShadow(
@@ -460,8 +459,8 @@ class _ManagerMainContentState extends State<_ManagerMainContent> {
                       fontSize: 13,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
                       color: selected
-                          ? const Color(0xFF5C3A9E)
-                          : const Color(0xFF999999),
+                          ? Color(0xFF5C3A9E)
+                          : context.cs.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -569,14 +568,14 @@ class _MgrOverviewTab extends StatelessWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(20, 8, 20, 24),
+      physics: BouncingScrollPhysics(),
       children: [
         // ── Performance + Bubble chart card ───────────────────────────────
         Container(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+          padding: EdgeInsets.fromLTRB(16, 20, 16, 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cs.surface,
             borderRadius: BorderRadius.circular(20),
             boxShadow: const [
               BoxShadow(
@@ -599,16 +598,16 @@ class _MgrOverviewTab extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 32,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFF1A1A1A),
+                            color: context.cs.onSurface,
                             height: 1.1,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Text(
                           'Your Performance\nincreased this month by\n$_perfLabel',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: const Color(0xFF888888),
+                            color: context.cs.onSurfaceVariant,
                             height: 1.55,
                           ),
                         ),
@@ -647,14 +646,14 @@ class _MgrOverviewTab extends StatelessWidget {
                 style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1A1A1A))),
+                    color: context.cs.onSurface)),
             GestureDetector(
               onTap: () => Navigator.pushNamed(context, '/machines'),
               child: Row(
                 children: [
                   Text('View all',
                       style: GoogleFonts.poppins(
-                          color: const Color(0xFF5C3A9E),
+                          color: Color(0xFF5C3A9E),
                           fontSize: 13,
                           fontWeight: FontWeight.w500)),
                   const Icon(Icons.keyboard_arrow_down_rounded,
@@ -712,9 +711,9 @@ class _ActiveJobsCard extends StatelessWidget {
         : '\$12.7k';
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cs.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
@@ -733,8 +732,8 @@ class _ActiveJobsCard extends StatelessWidget {
                 children: [
                   Text('Active sales',
                       style: GoogleFonts.poppins(
-                          fontSize: 11, color: const Color(0xFF999999))),
-                  const SizedBox(height: 2),
+                          fontSize: 11, color: context.cs.onSurfaceVariant)),
+                  SizedBox(height: 2),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -743,7 +742,7 @@ class _ActiveJobsCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
-                          color: const Color(0xFF1A1A1A),
+                          color: context.cs.onSurface,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -751,7 +750,7 @@ class _ActiveJobsCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2ECC71).withOpacity(0.12),
+                          color: Color(0xFF2ECC71).withOpacity(0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -761,34 +760,33 @@ class _ActiveJobsCard extends StatelessWidget {
                             Text('1.3%',
                                 style: GoogleFonts.poppins(
                                     fontSize: 10,
-                                    color: const Color(0xFF2ECC71),
+                                    color: Color(0xFF2ECC71),
                                     fontWeight: FontWeight.w600)),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       Text('VS LAST YEAR',
                           style: GoogleFonts.poppins(
-                              fontSize: 9, color: const Color(0xFF999999))),
+                              fontSize: 9, color: context.cs.onSurfaceVariant)),
                     ],
                   ),
                 ],
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFDDDDDD)),
+                  border: Border.all(color: context.cs.outline),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   children: [
                     Text('Monthly',
                         style: GoogleFonts.poppins(
-                            fontSize: 11, color: const Color(0xFF555555))),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down,
-                        size: 14, color: Color(0xFF555555)),
+                            fontSize: 11, color: context.cs.onSurfaceVariant)),
+                    SizedBox(width: 4),
+                    Icon(Icons.keyboard_arrow_down,
+                        size: 14, color: context.cs.onSurfaceVariant),
                   ],
                 ),
               ),
@@ -815,7 +813,8 @@ class _ActiveJobsCard extends StatelessWidget {
                     children: ['4k', '3k', '2k', '1k', '0']
                         .map((l) => Text(l,
                             style: GoogleFonts.poppins(
-                                fontSize: 9, color: const Color(0xFFBBBBBB))))
+                                fontSize: 9,
+                                color: context.cs.onSurfaceVariant)))
                         .toList(),
                   ),
                   const SizedBox(width: 8),
@@ -869,15 +868,15 @@ class _MgrAnalyticTabState extends State<_MgrAnalyticTab> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             children: [
               Text('Failure log',
                   style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1A1A1A))),
-              const Spacer(),
+                      color: context.cs.onSurface)),
+              Spacer(),
               _filterPill('All', 0),
               const SizedBox(width: 8),
               _filterPill('Critical', 1),
@@ -908,20 +907,20 @@ class _MgrAnalyticTabState extends State<_MgrAnalyticTab> {
     return GestureDetector(
       onTap: () => setState(() => _filterIndex = idx),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        duration: Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF2E2E4A) : Colors.transparent,
+          color: selected ? Color(0xFF2E2E4A) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? const Color(0xFF2E2E4A) : const Color(0xFFDDDDDD),
+            color: selected ? Color(0xFF2E2E4A) : context.cs.outline,
           ),
         ),
         child: Text(label,
             style: GoogleFonts.poppins(
                 fontSize: 11,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                color: selected ? Colors.white : const Color(0xFF888888))),
+                color: selected ? Colors.white : context.cs.onSurfaceVariant)),
       ),
     );
   }
@@ -1029,17 +1028,17 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
     const dayFull = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.symmetric(horizontal: 20),
+      physics: BouncingScrollPhysics(),
       children: [
         // ── Calendar card ──────────────────────────────────────────────────
         Container(
-          padding: const EdgeInsets.all(18),
+          padding: EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cs.surface,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFEEEEEE)),
-            boxShadow: const [
+            border: Border.all(color: context.cs.outline),
+            boxShadow: [
               BoxShadow(
                   color: Color(0x0F000000),
                   blurRadius: 10,
@@ -1057,7 +1056,7 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
                       style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF1A1A1A))),
+                          color: context.cs.onSurface)),
                   Row(children: [
                     _arrowBtn(Icons.chevron_left, _prev),
                     const SizedBox(width: 6),
@@ -1080,8 +1079,8 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: isToday
-                                  ? const Color(0xFFFF9800)
-                                  : const Color(0xFF999999))),
+                                  ? Color(0xFFFF9800)
+                                  : context.cs.onSurfaceVariant)),
                     ),
                   );
                 }).toList(),
@@ -1100,7 +1099,7 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
                         height: 36,
                         decoration: isToday
                             ? BoxDecoration(
-                                color: const Color(0xFFFF9800),
+                                color: Color(0xFFFF9800),
                                 borderRadius: BorderRadius.circular(20))
                             : null,
                         child: Center(
@@ -1112,7 +1111,7 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
                                     isToday ? FontWeight.bold : FontWeight.w400,
                                 color: isToday
                                     ? Colors.white
-                                    : const Color(0xFF555555)),
+                                    : context.cs.onSurfaceVariant),
                           ),
                         ),
                       ),
@@ -1131,16 +1130,16 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
 
         // ── fault Overview chart card ───────────────────────────────────────
         Container(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cs.surface,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFEEEEEE)),
-            boxShadow: const [
+            border: Border.all(color: context.cs.outline),
+            boxShadow: [
               BoxShadow(
                   color: Color(0x0F000000),
                   blurRadius: 10,
@@ -1158,14 +1157,14 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
                       style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1A1A1A))),
+                          color: context.cs.onSurface)),
                   Row(
                     children: [
                       Text('Weekly',
                           style: GoogleFonts.poppins(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF5C3A9E))),
+                              color: Color(0xFF5C3A9E))),
                       const Icon(Icons.keyboard_arrow_down_rounded,
                           color: Color(0xFF5C3A9E), size: 18),
                     ],
@@ -1192,7 +1191,7 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
                                 .map((l) => Text(l,
                                     style: GoogleFonts.poppins(
                                         fontSize: 9,
-                                        color: const Color(0xFFBBBBBB))))
+                                        color: context.cs.onSurfaceVariant)))
                                 .toList(),
                           ),
                           const SizedBox(width: 8),
@@ -1201,8 +1200,8 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
                               painter: _DualLineChartPainter(
                                 series1: _tempData,
                                 series2: _spareData,
-                                color1: const Color(0xFF3F51B5),
-                                color2: const Color(0xFFFF9800),
+                                color1: Color(0xFF3F51B5),
+                                color2: Color(0xFFFF9800),
                                 tooltipLabel: '+1.7%',
                                 tooltipIndex: 3, // Wed
                                 todayIndex: _today.weekday % 7,
@@ -1232,8 +1231,8 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
                             fontWeight:
                                 isToday ? FontWeight.w700 : FontWeight.w400,
                             color: isToday
-                                ? const Color(0xFF5C3A9E)
-                                : const Color(0xFFAAAAAA),
+                                ? Color(0xFF5C3A9E)
+                                : context.cs.onSurfaceVariant,
                           ),
                         );
                       }).toList(),
@@ -1250,24 +1249,24 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
                   Container(
                     width: 10,
                     height: 10,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                         color: Color(0xFF3F51B5), shape: BoxShape.circle),
                   ),
-                  const SizedBox(width: 5),
+                  SizedBox(width: 5),
                   Text('Temperature',
                       style: GoogleFonts.poppins(
-                          fontSize: 11, color: const Color(0xFF555555))),
-                  const SizedBox(width: 20),
+                          fontSize: 11, color: context.cs.onSurfaceVariant)),
+                  SizedBox(width: 20),
                   Container(
                     width: 10,
                     height: 10,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                         color: Color(0xFFFF9800), shape: BoxShape.circle),
                   ),
-                  const SizedBox(width: 5),
+                  SizedBox(width: 5),
                   Text('spare parts',
                       style: GoogleFonts.poppins(
-                          fontSize: 11, color: const Color(0xFF555555))),
+                          fontSize: 11, color: context.cs.onSurfaceVariant)),
                 ],
               ),
             ],
@@ -1286,9 +1285,9 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
         height: 30,
         decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFDDDDDD)),
-            color: Colors.white),
-        child: Icon(icon, size: 18, color: const Color(0xFF777777)),
+            border: Border.all(color: context.cs.outline),
+            color: context.cs.surface),
+        child: Icon(icon, size: 18, color: Color(0xFF777777)),
       ),
     );
   }
@@ -1318,7 +1317,7 @@ class _DualLineChartPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const fixedMax = 100.0;
+    final fixedMax = 100.0;
 
     // Horizontal grid lines at 0, 25, 50, 100
     final gridPaint = Paint()
@@ -1441,7 +1440,7 @@ class _DualLineChartPainter extends CustomPainter {
     final tp = TextPainter(
       text: TextSpan(
         text: label,
-        style: const TextStyle(
+        style: TextStyle(
             color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
       ),
       textDirection: TextDirection.ltr,
@@ -1484,7 +1483,7 @@ class _BubbleChart extends StatelessWidget {
             top: 10,
             child: _Bubble(
               diameter: base,
-              color: const Color(0xFF5C6BC0),
+              color: Color(0xFF5C6BC0),
               label: _fmt(activePct),
               fontSize: 18,
             ),
@@ -1494,7 +1493,7 @@ class _BubbleChart extends StatelessWidget {
             top: 0,
             child: _Bubble(
               diameter: base * 0.58,
-              color: const Color(0xFFFF9800),
+              color: Color(0xFFFF9800),
               label: _fmt(faultPct),
               fontSize: 13,
             ),
@@ -1504,7 +1503,7 @@ class _BubbleChart extends StatelessWidget {
             bottom: 0,
             child: _Bubble(
               diameter: base * 0.40,
-              color: const Color(0xFF1A1A2E),
+              color: Color(0xFF1A1A2E),
               label: _fmt(inactivePct),
               fontSize: 11,
             ),
@@ -1575,11 +1574,11 @@ class _LegendDot extends StatelessWidget {
           height: 10,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 5),
+        SizedBox(width: 5),
         Text(label,
             style: GoogleFonts.poppins(
                 fontSize: 11,
-                color: const Color(0xFF555555),
+                color: context.cs.onSurfaceVariant,
                 fontWeight: FontWeight.w500)),
       ],
     );
@@ -1592,17 +1591,17 @@ class _LegendDot extends StatelessWidget {
 class _MachineChip extends StatelessWidget {
   final Machine machine;
   final Color dotColor;
-  const _MachineChip({required this.machine, required this.dotColor});
+  _MachineChip({required this.machine, required this.dotColor});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cs.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-        boxShadow: const [
+        border: Border.all(color: context.cs.outline),
+        boxShadow: [
           BoxShadow(
               color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 2))
         ],
@@ -1615,12 +1614,12 @@ class _MachineChip extends StatelessWidget {
             height: 9,
             decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
           ),
-          const SizedBox(width: 7),
+          SizedBox(width: 7),
           Text(machine.machineId,
               style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF2A2A2A))),
+                  color: context.cs.onSurface)),
         ],
       ),
     );
@@ -1652,14 +1651,14 @@ class _FailureCard extends StatelessWidget {
       badgeColor = const Color(0xFFE53935);
       badgeLabel = 'Critical';
     } else {
-      borderColor = const Color(0xFFFF9800);
-      badgeColor = const Color(0xFFFF9800);
+      borderColor = Color(0xFFFF9800);
+      badgeColor = Color(0xFFFF9800);
       badgeLabel = status == 'open' ? 'Open' : _cap(status);
     }
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cs.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border(left: BorderSide(color: borderColor, width: 4)),
         boxShadow: const [
@@ -1679,40 +1678,40 @@ class _FailureCard extends StatelessWidget {
                   style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF333333)),
+                      color: context.cs.onSurface),
                 ),
               ),
               _BadgePill(label: badgeLabel, color: badgeColor),
             ],
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: 2),
           Text(
             failure.machineId,
             style: GoogleFonts.poppins(
-                fontSize: 11, color: const Color(0xFF888888)),
+                fontSize: 11, color: context.cs.onSurfaceVariant),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             failure.description.isNotEmpty
                 ? failure.description
                 : 'No description provided.',
             style: GoogleFonts.poppins(
-                fontSize: 12, color: const Color(0xFF444444), height: 1.4),
+                fontSize: 12, color: context.cs.onSurfaceVariant, height: 1.4),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.person_outline,
-                  size: 14, color: Color(0xFF888888)),
-              const SizedBox(width: 4),
+              Icon(Icons.person_outline,
+                  size: 14, color: context.cs.onSurfaceVariant),
+              SizedBox(width: 4),
               Text(
                 failure.assignedTo.isNotEmpty
                     ? failure.assignedTo.split('@').first
                     : 'Unassigned',
                 style: GoogleFonts.poppins(
-                    fontSize: 11, color: const Color(0xFF888888)),
+                    fontSize: 11, color: context.cs.onSurfaceVariant),
               ),
             ],
           ),
@@ -1758,7 +1757,7 @@ class _LineChartPainter extends CustomPainter {
     final maxVal = data.reduce(max).clamp(1.0, double.infinity);
 
     final gridPaint = Paint()
-      ..color = const Color(0xFFF0F0F0)
+      ..color = const Color(0xFFF8F8F8)
       ..strokeWidth = 1;
     for (int i = 0; i <= 4; i++) {
       final y = size.height * i / 4;
@@ -1843,12 +1842,12 @@ class _LineChartPainter extends CustomPainter {
         ..lineTo(pt.dx + 6, top + th)
         ..lineTo(pt.dx, top + th + triH)
         ..close(),
-      Paint()..color = const Color(0xFF2E2E4A),
+      Paint()..color = Color(0xFF2E2E4A),
     );
     final tp = TextPainter(
       text: TextSpan(
         text: label,
-        style: const TextStyle(
+        style: TextStyle(
             color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
       ),
       textDirection: TextDirection.ltr,
@@ -1874,11 +1873,11 @@ class _PlaceholderTab extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(icon, size: 48, color: const Color(0xFFCCCCCC)),
-        const SizedBox(height: 12),
+        Icon(icon, size: 48, color: Color(0xFFCCCCCC)),
+        SizedBox(height: 12),
         Text(label,
             style: GoogleFonts.poppins(
-                color: const Color(0xFFAAAAAA), fontSize: 16)),
+                color: context.cs.onSurfaceVariant, fontSize: 16)),
       ],
     );
   }

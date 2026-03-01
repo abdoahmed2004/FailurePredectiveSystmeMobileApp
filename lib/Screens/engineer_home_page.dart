@@ -1,6 +1,9 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:fpms_app/core/theme/app_theme.dart';
+import 'package:fpms_app/core/theme/theme_controller.dart';
+
 import '../Services/auth_service.dart';
 import '../Models/user_model.dart';
 import '../Models/machine_model.dart';
@@ -20,14 +23,11 @@ class EngineerHomePage extends StatefulWidget {
 
 class _EngineerHomePageState extends State<EngineerHomePage> {
   int _bottomIndex = 0;
-  bool isDarkMode = true;
-
-  void _toggleTheme(bool v) => setState(() => isDarkMode = v);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.cs.surface,
       body: SafeArea(
         child: IndexedStack(
           index: _bottomIndex,
@@ -39,7 +39,7 @@ class _EngineerHomePageState extends State<EngineerHomePage> {
             const Center(
                 child: _PlaceholderTab(
                     icon: Icons.schedule_outlined, label: 'Reports')),
-            ProfileScreen(isDarkMode: isDarkMode, onThemeChanged: _toggleTheme),
+            const ProfileScreen(),
           ],
         ),
       ),
@@ -57,10 +57,10 @@ class _EngineerHomePageState extends State<EngineerHomePage> {
 
     return Container(
       height: 72,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: context.cs.surface,
+        border: Border(top: BorderSide(color: context.cs.outline)),
         boxShadow: [
           BoxShadow(
               color: Color(0x14000000), blurRadius: 12, offset: Offset(0, -4)),
@@ -84,14 +84,14 @@ class _EngineerHomePageState extends State<EngineerHomePage> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF5C3A9E),
+                      color: Color(0xFF5C3A9E),
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Row(
                       children: [
                         Image.asset(iconPath,
                             width: 20, height: 20, color: Colors.white),
-                        const SizedBox(width: 6),
+                        SizedBox(width: 6),
                         Text(label,
                             style: GoogleFonts.poppins(
                                 color: Colors.white,
@@ -102,7 +102,9 @@ class _EngineerHomePageState extends State<EngineerHomePage> {
                   )
                 else
                   Image.asset(iconPath,
-                      width: 24, height: 24, color: const Color(0xFFAAAAAA)),
+                      width: 24,
+                      height: 24,
+                      color: context.cs.onSurfaceVariant),
                 if (selected) ...[
                   const SizedBox(height: 3),
                   Container(
@@ -203,7 +205,7 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
             // ── White body ─────────────────────────────────────────────────
             Expanded(
               child: Container(
-                color: Colors.white,
+                color: context.cs.surface,
                 child: Column(
                   children: [
                     const SizedBox(height: 18),
@@ -223,11 +225,11 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
             right: 20,
             bottom: 20,
             child: FloatingActionButton(
-              backgroundColor: const Color(0xFF5C3A9E),
+              backgroundColor: Color(0xFF5C3A9E),
               elevation: 6,
-              shape: const CircleBorder(),
+              shape: CircleBorder(),
               onPressed: () => _showReportSheet(context),
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
+              child: Icon(Icons.add, color: Colors.white, size: 28),
             ),
           ),
       ],
@@ -252,8 +254,7 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
             padding: const EdgeInsets.fromLTRB(18, 10, 18, 12),
             child: Row(
               children: [
-                const Icon(Icons.grid_view_rounded,
-                    color: Colors.white70, size: 22),
+                Icon(Icons.grid_view_rounded, color: Colors.white70, size: 22),
                 Expanded(
                   child: Center(
                     child: Text(
@@ -309,7 +310,7 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
               height: 90,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.08),
+                color: context.cs.surface.withOpacity(0.08),
               ),
             ),
           ),
@@ -389,10 +390,10 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
         _failures.isEmpty ? [5.0, 12.0, 8.0, 18.0, 22.0, 15.0, 10.0] : counts;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cs.surface,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -414,32 +415,31 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
                 children: [
                   Text('Failures',
                       style: GoogleFonts.poppins(
-                          color: const Color(0xFF888888), fontSize: 12)),
+                          color: context.cs.onSurfaceVariant, fontSize: 12)),
                   Text(
                     '${_failures.isEmpty ? 23 : _failures.length}',
                     style: GoogleFonts.poppins(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1A1A1A),
+                      color: context.cs.onSurface,
                     ),
                   ),
                 ],
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFDDDDDD)),
+                  border: Border.all(color: context.cs.outline),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   children: [
                     Text('Monthly',
                         style: GoogleFonts.poppins(
-                            fontSize: 11, color: const Color(0xFF555555))),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down,
-                        size: 14, color: Color(0xFF555555)),
+                            fontSize: 11, color: context.cs.onSurfaceVariant)),
+                    SizedBox(width: 4),
+                    Icon(Icons.keyboard_arrow_down,
+                        size: 14, color: context.cs.onSurfaceVariant),
                   ],
                 ),
               ),
@@ -462,7 +462,7 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
                 .map((m) => Text(m,
                     style: GoogleFonts.poppins(
                         fontSize: 9,
-                        color: const Color(0xFF999999),
+                        color: context.cs.onSurfaceVariant,
                         fontWeight: FontWeight.w500)))
                 .toList(),
           ),
@@ -483,13 +483,12 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
             child: GestureDetector(
               onTap: () => setState(() => _tabIndex = i),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   color: selected ? Colors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(30),
-                  border: selected
-                      ? Border.all(color: const Color(0xFFDDDDDD))
-                      : null,
+                  border:
+                      selected ? Border.all(color: context.cs.outline) : null,
                   boxShadow: selected
                       ? [
                           const BoxShadow(
@@ -507,8 +506,8 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
                       fontSize: 13,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
                       color: selected
-                          ? const Color(0xFF5C3A9E)
-                          : const Color(0xFF999999),
+                          ? Color(0xFF5C3A9E)
+                          : context.cs.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -556,7 +555,7 @@ class _LineChartPainter extends CustomPainter {
 
     // Y-axis grid lines
     final gridPaint = Paint()
-      ..color = const Color(0xFFF0F0F0)
+      ..color = const Color(0xFFF8F8F8)
       ..strokeWidth = 1;
     for (int i = 0; i <= 3; i++) {
       final y = size.height * (1 - i / 3);
@@ -647,13 +646,13 @@ class _LineChartPainter extends CustomPainter {
       ..lineTo(pt.dx + 6, top + th)
       ..lineTo(pt.dx, top + th + triH)
       ..close();
-    canvas.drawPath(tri, Paint()..color = const Color(0xFF2E2E4A));
+    canvas.drawPath(tri, Paint()..color = Color(0xFF2E2E4A));
 
     // Text
     final tp = TextPainter(
         text: TextSpan(
           text: label,
-          style: const TextStyle(
+          style: TextStyle(
               color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
         ),
         textDirection: TextDirection.ltr);
@@ -709,7 +708,7 @@ class _FailuresTabState extends State<_FailuresTab> {
     }
 
     return RefreshIndicator(
-      color: const Color(0xFF5C3A9E),
+      color: Color(0xFF5C3A9E),
       onRefresh: widget.onRefresh,
       child: Column(
         children: [
@@ -723,7 +722,7 @@ class _FailuresTabState extends State<_FailuresTab> {
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1A1A1A),
+                    color: context.cs.onSurface,
                   ),
                 ),
                 const Spacer(),
@@ -773,13 +772,13 @@ class _FailuresTabState extends State<_FailuresTab> {
     return GestureDetector(
       onTap: () => setState(() => _filterIndex = idx),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        duration: Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF2E2E4A) : Colors.transparent,
+          color: selected ? Color(0xFF2E2E4A) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? const Color(0xFF2E2E4A) : const Color(0xFFDDDDDD),
+            color: selected ? Color(0xFF2E2E4A) : context.cs.outline,
           ),
         ),
         child: Text(
@@ -787,7 +786,7 @@ class _FailuresTabState extends State<_FailuresTab> {
           style: GoogleFonts.poppins(
             fontSize: 11,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-            color: selected ? Colors.white : const Color(0xFF888888),
+            color: selected ? Colors.white : context.cs.onSurfaceVariant,
           ),
         ),
       ),
@@ -833,7 +832,7 @@ class _FailureCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cs.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border(
           left: BorderSide(color: borderColor, width: 4),
@@ -860,20 +859,20 @@ class _FailureCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF333333),
+                      color: context.cs.onSurface,
                     ),
                   ),
                 ),
                 _BadgePill(label: badgeLabel, color: badgeColor),
               ],
             ),
-            const SizedBox(height: 2),
+            SizedBox(height: 2),
             // ── Row 2: Machine ID + datetime
             Text(
               '${failure.machineId}${dateStr.isNotEmpty ? '   $dateStr' : ''}',
               style: GoogleFonts.poppins(
                 fontSize: 11,
-                color: const Color(0xFF888888),
+                color: context.cs.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 8),
@@ -884,19 +883,19 @@ class _FailureCard extends StatelessWidget {
                   : 'No description provided.',
               style: GoogleFonts.poppins(
                 fontSize: 12,
-                color: const Color(0xFF444444),
+                color: context.cs.onSurfaceVariant,
                 height: 1.4,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             // ── Bottom row: assigned person + resolve button
             Row(
               children: [
-                const Icon(Icons.person_outline,
-                    size: 15, color: Color(0xFF888888)),
-                const SizedBox(width: 4),
+                Icon(Icons.person_outline,
+                    size: 15, color: context.cs.onSurfaceVariant),
+                SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     failure.assignedTo.isNotEmpty
@@ -904,7 +903,7 @@ class _FailureCard extends StatelessWidget {
                         : 'Unassigned',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: const Color(0xFF888888),
+                      color: context.cs.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -916,7 +915,7 @@ class _FailureCard extends StatelessWidget {
                         'Resolve',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: const Color(0xFF5C3A9E),
+                          color: Color(0xFF5C3A9E),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1233,9 +1232,9 @@ class _ReportFailureSheetState extends State<_ReportFailureSheet> {
     final bottomPad = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFFF7F7F7),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: context.cs.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.fromLTRB(24, 20, 24, 24 + bottomPad),
       child: SingleChildScrollView(
@@ -1249,23 +1248,23 @@ class _ReportFailureSheetState extends State<_ReportFailureSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDDDDDD),
+                  color: context.cs.outline,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // ── Title
             Text('Report failure',
                 style: GoogleFonts.poppins(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1A1A1A))),
+                    color: context.cs.onSurface)),
             Text('Log a new incident for a machine',
                 style: GoogleFonts.poppins(
-                    fontSize: 12, color: const Color(0xFF888888))),
-            const Divider(height: 24, color: Color(0xFFE0E0E0)),
+                    fontSize: 12, color: context.cs.onSurfaceVariant)),
+            Divider(height: 24, color: context.cs.outline),
 
             // ── Machine Name (full width)
             _label('Machine Name'),
@@ -1315,19 +1314,19 @@ class _ReportFailureSheetState extends State<_ReportFailureSheet> {
               width: MediaQuery.of(context).size.width / 2 - 30,
               child: _assignDropdown(),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // ── Severity slider
             Text('Severity level',
                 style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1A1A1A))),
-            const SizedBox(height: 8),
+                    color: context.cs.onSurface)),
+            SizedBox(height: 8),
             SliderTheme(
               data: SliderThemeData(
                 activeTrackColor: _severityColor(),
-                inactiveTrackColor: const Color(0xFFDDDDDD),
+                inactiveTrackColor: context.cs.outline,
                 thumbColor: _severityColor(),
                 overlayColor: _severityColor().withOpacity(0.15),
                 trackHeight: 4,
@@ -1342,12 +1341,13 @@ class _ReportFailureSheetState extends State<_ReportFailureSheet> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              padding: EdgeInsets.symmetric(horizontal: 4),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: ['Low', 'Normal', 'Critical'].map((s) {
                   final active = _severityText() == s;
-                  final c = active ? _severityColor() : const Color(0xFFAAAAAA);
+                  final c =
+                      active ? _severityColor() : context.cs.onSurfaceVariant;
                   return Text(s,
                       style: GoogleFonts.poppins(
                           fontSize: 12,
@@ -1363,7 +1363,7 @@ class _ReportFailureSheetState extends State<_ReportFailureSheet> {
               const SizedBox(height: 12),
               Text(_error!,
                   style: GoogleFonts.poppins(
-                      color: const Color(0xFFE53935), fontSize: 12)),
+                      color: Color(0xFFE53935), fontSize: 12)),
             ],
 
             const SizedBox(height: 24),
@@ -1375,21 +1375,19 @@ class _ReportFailureSheetState extends State<_ReportFailureSheet> {
               child: ElevatedButton(
                 onPressed: _submitting ? null : _submit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF9800),
-                  disabledBackgroundColor:
-                      const Color(0xFFFF9800).withOpacity(0.5),
+                  backgroundColor: Color(0xFFFF9800),
+                  disabledBackgroundColor: Color(0xFFFF9800).withOpacity(0.5),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
                 ),
                 child: _submitting
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2.5))
-                    : const Icon(Icons.save_rounded,
-                        color: Colors.white, size: 26),
+                            color: context.cs.surface, strokeWidth: 2.5))
+                    : Icon(Icons.save_rounded, color: Colors.white, size: 26),
               ),
             ),
           ],
@@ -1403,7 +1401,7 @@ class _ReportFailureSheetState extends State<_ReportFailureSheet> {
   Widget _label(String text) => Text(text,
       style: GoogleFonts.poppins(
           fontSize: 12,
-          color: const Color(0xFF555555),
+          color: context.cs.onSurfaceVariant,
           fontWeight: FontWeight.w500));
 
   Widget _textField({
@@ -1414,27 +1412,26 @@ class _ReportFailureSheetState extends State<_ReportFailureSheet> {
     return TextField(
       controller: controller,
       enabled: enabled,
-      style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1A1A1A)),
+      style: GoogleFonts.poppins(fontSize: 13, color: context.cs.onSurface),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle:
-            GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFAAAAAA)),
+        hintStyle: GoogleFonts.poppins(
+            fontSize: 12, color: context.cs.onSurfaceVariant),
         filled: true,
-        fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        fillColor: context.cs.surfaceContainerHighest,
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: Color(0xFFE0E0E0))),
+            borderSide: BorderSide(color: context.cs.outline)),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: Color(0xFFE0E0E0))),
+            borderSide: BorderSide(color: context.cs.outline)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: Color(0xFFFF9800), width: 1.5)),
+            borderSide: BorderSide(color: Color(0xFFFF9800), width: 1.5)),
         disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: Color(0xFFEEEEEE))),
+            borderSide: BorderSide(color: context.cs.outline)),
       ),
     );
   }
@@ -1442,23 +1439,23 @@ class _ReportFailureSheetState extends State<_ReportFailureSheet> {
   Widget _machineDropdown() {
     final machines = widget.preloadedMachines;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cs.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
+        border: Border.all(color: context.cs.outline),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedMachineId,
           hint: Text('Select',
               style: GoogleFonts.poppins(
-                  fontSize: 12, color: const Color(0xFFAAAAAA))),
+                  fontSize: 12, color: context.cs.onSurfaceVariant)),
           isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down,
+          dropdownColor: context.cs.surface,
+          icon: Icon(Icons.keyboard_arrow_down,
               size: 18, color: Color(0xFF777777)),
-          style:
-              GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF1A1A1A)),
+          style: GoogleFonts.poppins(fontSize: 12, color: context.cs.onSurface),
           items: machines
               .map((m) => DropdownMenuItem<String>(
                     value: m.id ?? m.machineId,
@@ -1492,23 +1489,23 @@ class _ReportFailureSheetState extends State<_ReportFailureSheet> {
       );
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cs.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
+        border: Border.all(color: context.cs.outline),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedAssignee,
           hint: Text('Select',
               style: GoogleFonts.poppins(
-                  fontSize: 12, color: const Color(0xFFAAAAAA))),
+                  fontSize: 12, color: context.cs.onSurfaceVariant)),
           isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down,
+          dropdownColor: context.cs.surface,
+          icon: Icon(Icons.keyboard_arrow_down,
               size: 18, color: Color(0xFF777777)),
-          style:
-              GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF1A1A1A)),
+          style: GoogleFonts.poppins(fontSize: 12, color: context.cs.onSurface),
           items: _technicians
               .map((u) => DropdownMenuItem<String>(
                     value: u.email,
@@ -1578,16 +1575,16 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
   Widget build(BuildContext context) {
     const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.symmetric(horizontal: 20),
+      physics: BouncingScrollPhysics(),
       children: [
         Container(
-          padding: const EdgeInsets.all(18),
+          padding: EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cs.surface,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFEEEEEE)),
-            boxShadow: const [
+            border: Border.all(color: context.cs.outline),
+            boxShadow: [
               BoxShadow(
                   color: Color(0x0F000000),
                   blurRadius: 10,
@@ -1605,7 +1602,7 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
                       style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF1A1A1A))),
+                          color: context.cs.onSurface)),
                   Row(children: [
                     _arrowBtn(Icons.chevron_left, _prev),
                     const SizedBox(width: 6),
@@ -1628,8 +1625,8 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: isToday
-                                  ? const Color(0xFFFF9800)
-                                  : const Color(0xFF999999))),
+                                  ? Color(0xFFFF9800)
+                                  : context.cs.onSurfaceVariant)),
                     ),
                   );
                 }).toList(),
@@ -1648,7 +1645,7 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
                         height: 36,
                         decoration: isToday
                             ? BoxDecoration(
-                                color: const Color(0xFFFF9800),
+                                color: Color(0xFFFF9800),
                                 borderRadius: BorderRadius.circular(20))
                             : null,
                         child: Center(
@@ -1660,7 +1657,7 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
                                     isToday ? FontWeight.bold : FontWeight.w400,
                                 color: isToday
                                     ? Colors.white
-                                    : const Color(0xFF555555)),
+                                    : context.cs.onSurfaceVariant),
                           ),
                         ),
                       ),
@@ -1691,9 +1688,9 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
         height: 30,
         decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFDDDDDD)),
-            color: Colors.white),
-        child: Icon(icon, size: 18, color: const Color(0xFF777777)),
+            border: Border.all(color: context.cs.outline),
+            color: context.cs.surface),
+        child: Icon(icon, size: 18, color: Color(0xFF777777)),
       ),
     );
   }
@@ -1741,14 +1738,14 @@ class _OverviewTab extends StatelessWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(20, 8, 20, 24),
+      physics: BouncingScrollPhysics(),
       children: [
         // ── Performance + Donut bubble card ────────────────────────────────
         Container(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+          padding: EdgeInsets.fromLTRB(16, 20, 16, 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cs.surface,
             borderRadius: BorderRadius.circular(20),
             boxShadow: const [
               BoxShadow(
@@ -1773,16 +1770,16 @@ class _OverviewTab extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 32,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFF1A1A1A),
+                            color: context.cs.onSurface,
                             height: 1.1,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Text(
                           'Your Performance\nincreased this month by\n$_perfLabel',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: const Color(0xFF888888),
+                            color: context.cs.onSurfaceVariant,
                             height: 1.55,
                           ),
                         ),
@@ -1824,7 +1821,7 @@ class _OverviewTab extends StatelessWidget {
               style: GoogleFonts.poppins(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1A1A1A)),
+                  color: context.cs.onSurface),
             ),
             GestureDetector(
               onTap: () => Navigator.pushNamed(context, '/machines'),
@@ -1832,7 +1829,7 @@ class _OverviewTab extends StatelessWidget {
                 children: [
                   Text('View all',
                       style: GoogleFonts.poppins(
-                          color: const Color(0xFF5C3A9E),
+                          color: Color(0xFF5C3A9E),
                           fontSize: 13,
                           fontWeight: FontWeight.w500)),
                   const Icon(Icons.keyboard_arrow_down_rounded,
@@ -1898,7 +1895,7 @@ class _BubbleChart extends StatelessWidget {
             top: 10,
             child: _Bubble(
               diameter: activeD,
-              color: const Color(0xFF5C6BC0),
+              color: Color(0xFF5C6BC0),
               label: _fmt(activePct),
               fontSize: 18,
             ),
@@ -1909,7 +1906,7 @@ class _BubbleChart extends StatelessWidget {
             top: 0,
             child: _Bubble(
               diameter: faultD,
-              color: const Color(0xFFFF9800),
+              color: Color(0xFFFF9800),
               label: _fmt(faultPct),
               fontSize: 13,
             ),
@@ -1920,7 +1917,7 @@ class _BubbleChart extends StatelessWidget {
             bottom: 0,
             child: _Bubble(
               diameter: inactiveD,
-              color: const Color(0xFF1A1A2E),
+              color: Color(0xFF1A1A2E),
               label: _fmt(inactivePct),
               fontSize: 11,
             ),
@@ -1991,12 +1988,12 @@ class _LegendDot extends StatelessWidget {
           height: 10,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 5),
+        SizedBox(width: 5),
         Text(
           label,
           style: GoogleFonts.poppins(
               fontSize: 11,
-              color: const Color(0xFF555555),
+              color: context.cs.onSurfaceVariant,
               fontWeight: FontWeight.w500),
         ),
       ],
@@ -2010,17 +2007,17 @@ class _LegendDot extends StatelessWidget {
 class _MachineChip extends StatelessWidget {
   final Machine machine;
   final Color dotColor;
-  const _MachineChip({required this.machine, required this.dotColor});
+  _MachineChip({required this.machine, required this.dotColor});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cs.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-        boxShadow: const [
+        border: Border.all(color: context.cs.outline),
+        boxShadow: [
           BoxShadow(
               color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 2))
         ],
@@ -2033,13 +2030,13 @@ class _MachineChip extends StatelessWidget {
             height: 9,
             decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
           ),
-          const SizedBox(width: 7),
+          SizedBox(width: 7),
           Text(
             machine.machineId,
             style: GoogleFonts.poppins(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF2A2A2A),
+              color: context.cs.onSurface,
             ),
           ),
         ],
@@ -2061,11 +2058,11 @@ class _PlaceholderTab extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(icon, size: 48, color: const Color(0xFFCCCCCC)),
-        const SizedBox(height: 12),
+        Icon(icon, size: 48, color: Color(0xFFCCCCCC)),
+        SizedBox(height: 12),
         Text(label,
             style: GoogleFonts.poppins(
-                color: const Color(0xFFAAAAAA), fontSize: 16)),
+                color: context.cs.onSurfaceVariant, fontSize: 16)),
       ],
     );
   }

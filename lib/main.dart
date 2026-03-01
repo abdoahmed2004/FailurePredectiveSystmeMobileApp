@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fpms_app/core/constants/app_colors.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:fpms_app/core/theme/app_theme.dart';
+import 'package:fpms_app/core/theme/theme_controller.dart';
+
 import 'package:fpms_app/Screens/add_machine_screen.dart';
 import 'package:fpms_app/Screens/add_failure_screen.dart';
 // Screen Imports
@@ -38,70 +39,63 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Machinify',
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: AppColors.appBlack,
-        primaryColor: AppColors.appWhite,
-        textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeController.instance,
+      builder: (context, themeMode, _) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Machinify',
+        theme: AppTheme.light(),
+        darkTheme: AppTheme.dark(),
+        themeMode: themeMode,
+        initialRoute: '/',
+        routes: {
+          '/': (context) => const SplashScreen(),
+          '/onboarding': (context) => const OnboardingScreen(),
+          '/login': (context) => const LoginScreen(),
+          '/register': (context) => const RegisterScreen(),
+          // 🔍 PREVIEW ROUTES – remove when done testing
+          '/engineer-preview': (context) =>
+              const EngineerHomePage(userName: 'Ahmed Ashraf'),
+          '/employee-preview': (context) =>
+              const EmployeeHomePage(userName: 'Ali Ahmed'),
+          '/manager-preview': (context) =>
+              const ManagerHomePage(userName: 'Omar Khaled'),
+          '/home': (context) {
+            // Extract user role and name from arguments
+            final args = ModalRoute.of(context)?.settings.arguments
+                as Map<String, dynamic>?;
+            final role =
+                (args?['userRole'] ?? 'admin').toString().toLowerCase();
+            final name = (args?['userName'] ?? 'Engineer').toString();
+
+            // Route role to the correct home page
+            if (role == 'engineer') return EngineerHomePage(userName: name);
+            if (role == 'technician') return EmployeeHomePage(userName: name);
+            if (role == 'admin' || role == 'manager')
+              return ManagerHomePage(userName: name);
+            return HomePage(userRole: role);
+          },
+
+          // Machine Routes
+          '/machines': (context) => const AllMachinesPage(),
+          '/add-machine': (context) => const AddMachineScreen(),
+          '/add-failure': (context) => const AddFailureScreen(),
+
+          // Auth Flow Routes
+          '/forgot-password': (context) => const ForgotPasswordScreen(),
+          '/check-email': (context) => CheckEmailScreen(
+              email: ModalRoute.of(context)!.settings.arguments as String),
+          '/reset-password': (context) => const ResetPasswordScreen(),
+          '/password-changed-success': (context) =>
+              const PasswordChangedSuccessScreen(),
+
+          // --- PROFILE ROUTES ---
+          '/profile': (context) => const ProfileScreen(),
+
+          '/edit-profile': (context) => const EditProfileScreen(),
+          '/change-password': (context) => const ChangePasswordScreen(),
+        },
       ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashScreen(),
-        '/onboarding': (context) => const OnboardingScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/register': (context) => const RegisterScreen(),
-        // 🔍 PREVIEW ROUTES – remove when done testing
-        '/engineer-preview': (context) =>
-            const EngineerHomePage(userName: 'Ahmed Ashraf'),
-        '/employee-preview': (context) =>
-            const EmployeeHomePage(userName: 'Ali Ahmed'),
-        '/manager-preview': (context) =>
-            const ManagerHomePage(userName: 'Omar Khaled'),
-        '/home': (context) {
-          // Extract user role and name from arguments
-          final args = ModalRoute.of(context)?.settings.arguments
-              as Map<String, dynamic>?;
-          final role = (args?['userRole'] ?? 'admin').toString().toLowerCase();
-          final name = (args?['userName'] ?? 'Engineer').toString();
-
-          // Route role to the correct home page
-          if (role == 'engineer') return EngineerHomePage(userName: name);
-          if (role == 'technician') return EmployeeHomePage(userName: name);
-          if (role == 'admin' || role == 'manager')
-            return ManagerHomePage(userName: name);
-          return HomePage(userRole: role);
-        },
-
-        // Machine Routes
-        '/machines': (context) => const AllMachinesPage(),
-        '/add-machine': (context) => const AddMachineScreen(),
-        '/add-failure': (context) => const AddFailureScreen(),
-
-        // Auth Flow Routes
-        '/forgot-password': (context) => const ForgotPasswordScreen(),
-        '/check-email': (context) => CheckEmailScreen(
-            email: ModalRoute.of(context)!.settings.arguments as String),
-        '/reset-password': (context) => const ResetPasswordScreen(),
-        '/password-changed-success': (context) =>
-            const PasswordChangedSuccessScreen(),
-
-        // --- PROFILE ROUTES ---
-        '/profile': (context) {
-          // Safely extract arguments if they exist
-          final args = ModalRoute.of(context)?.settings.arguments
-              as Map<String, dynamic>?;
-
-          return ProfileScreen(
-            // ProfileScreen now loads user data from API
-            isDarkMode: args?['isDarkMode'] ?? true,
-            onThemeChanged: (value) {},
-          );
-        },
-        '/edit-profile': (context) => const EditProfileScreen(),
-        '/change-password': (context) => const ChangePasswordScreen(),
-      },
     );
   }
 }

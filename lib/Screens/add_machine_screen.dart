@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fpms_app/core/constants/app_colors.dart';
 import '../Services/auth_service.dart';
+import '../core/theme/app_theme.dart';
 
 class AddMachineScreen extends StatefulWidget {
   const AddMachineScreen({super.key});
@@ -97,21 +98,14 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Get the theme setting passed from Home Page
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final isDarkMode = args?['isDarkMode'] ?? true; // Default to dark
+    final isDarkMode = context.isDark;
 
     // 2. Define Dynamic Colors
-    final textColor = isDarkMode ? Colors.white : Colors.black;
-    final cardColor = isDarkMode
-        ? const Color(0xFF1E1E1E).withOpacity(0.9)
-        : Colors.white.withOpacity(0.9);
-    final inputFillColor =
-        isDarkMode ? const Color(0xFF2C2C2C) : const Color(0xFFF5F5F5);
-    final borderColor =
-        isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300;
-    final hintColor = isDarkMode ? Colors.grey.shade500 : Colors.grey.shade400;
+    final textColor = context.cs.onSurface;
+    final cardColor = context.cs.surface.withOpacity(0.9);
+    final inputFillColor = context.cs.surfaceContainerHighest;
+    final borderColor = context.cs.outline;
+    final hintColor = context.cs.onSurfaceVariant;
 
     return Scaffold(
       body: Stack(
@@ -230,7 +224,8 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
                                     height: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white),
                                     ),
                                   )
                                 : const Text(

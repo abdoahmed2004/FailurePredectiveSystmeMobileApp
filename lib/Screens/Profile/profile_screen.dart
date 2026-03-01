@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:fpms_app/core/constants/app_colors.dart';
+import 'package:fpms_app/core/theme/app_theme.dart';
+import 'package:fpms_app/core/theme/theme_controller.dart';
 import '../../Services/auth_service.dart';
 import '../../Models/user_model.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final bool isDarkMode;
-  final Function(bool) onThemeChanged;
-
-  const ProfileScreen({
-    super.key,
-    required this.isDarkMode,
-    required this.onThemeChanged,
-  });
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -37,98 +32,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _isLoading = true;
         _error = null;
       });
-
       final user = await _authService.getPersonalInfo();
-
-      if (mounted) {
+      if (mounted)
         setState(() {
           _user = user;
           _isLoading = false;
         });
-      }
     } catch (e) {
-      if (mounted) {
+      if (mounted)
         setState(() {
           _error = e.toString();
           _isLoading = false;
         });
-      }
     }
   }
 
   Future<void> _logout() async {
-    // Show confirmation dialog first
     final shouldLogout = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Logout'),
-          content: const Text('Are you sure you want to logout?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Logout'),
-            ),
-          ],
-        );
-      },
+      builder: (ctx) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
     );
 
     if (shouldLogout != true) return;
-
-    setState(() {
-      _isLoggingOut = true;
-    });
+    setState(() => _isLoggingOut = true);
 
     try {
       final message = await _authService.logout();
-
       if (mounted) {
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-
-        // Navigate to login and clear all routes
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ));
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isLoggingOut = false;
-        });
-
-        // Still navigate to login even if API fails (token is cleared locally)
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Logged out locally: ${e.toString()}'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        setState(() => _isLoggingOut = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Logged out locally: ${e.toString()}'),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 3),
+        ));
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Determine text colors based on the PASSED theme
-    final textColor = widget.isDarkMode ? Colors.white : Colors.black;
-    final subTextColor =
-        widget.isDarkMode ? Colors.white70 : AppColors.textGrey;
-    final cardColor =
-        widget.isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+    final cs = context.cs;
+    final textColor = cs.onSurface;
+    final subTextColor = cs.onSurfaceVariant;
+    final cardColor = cs.surface;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -143,27 +113,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Icon(Icons.error_outline,
                             size: 64, color: Colors.red[300]),
                         const SizedBox(height: 16),
-                        Text(
-                          'Error loading profile',
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: textColor),
-                        ),
+                        Text('Error loading profile',
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: textColor)),
                         const SizedBox(height: 8),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 32),
-                          child: Text(
-                            _error!,
-                            style: TextStyle(fontSize: 14, color: subTextColor),
-                            textAlign: TextAlign.center,
-                          ),
+                          child: Text(_error!,
+                              style:
+                                  TextStyle(fontSize: 14, color: subTextColor),
+                              textAlign: TextAlign.center),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          onPressed: _loadUserData,
-                          child: const Text('Retry'),
-                        ),
+                            onPressed: _loadUserData,
+                            child: const Text('Retry')),
                       ],
                     ),
                   )
@@ -172,14 +138,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "Profile",
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                          ),
-                        ),
+                        Text('Profile',
+                            style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: textColor)),
                         const SizedBox(height: 20),
                         Container(
                           padding: const EdgeInsets.all(16),
@@ -199,29 +162,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      _user?.fullName ?? 'Loading...',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                                    Text(_user?.fullName ?? 'Loading...',
+                                        style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold)),
                                     const SizedBox(height: 4),
-                                    Text(
-                                      _user?.email ?? 'Loading...',
-                                      style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    Text(
-                                      _user?.role ?? 'Loading...',
-                                      style: const TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 12,
-                                          fontStyle: FontStyle.italic),
-                                    ),
+                                    Text(_user?.email ?? 'Loading...',
+                                        style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 14)),
+                                    Text(_user?.role ?? 'Loading...',
+                                        style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                            fontStyle: FontStyle.italic)),
                                   ],
                                 ),
                               ),
@@ -235,8 +190,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         arguments: {
                                           'name': _user!.fullName,
                                           'email': _user!.email,
-                                          // === FIX 1: PASS THE THEME STATE ===
-                                          'isDarkMode': widget.isDarkMode,
                                         });
                                   }
                                 },
@@ -247,8 +200,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 30),
                         _buildMenuItem(
                           icon: Icons.person_outline,
-                          title: "My Account",
-                          subtitle: "Make changes to your account",
+                          title: 'My Account',
+                          subtitle: 'Make changes to your account',
                           showWarning: true,
                           textColor: textColor,
                           subTextColor: subTextColor,
@@ -257,23 +210,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         _buildMenuItem(
                           icon: Icons.lock_outline,
-                          title: "Change Password",
-                          subtitle: "Change Your password",
+                          title: 'Change Password',
+                          subtitle: 'Change Your password',
                           textColor: textColor,
                           subTextColor: subTextColor,
                           cardColor: cardColor,
-                          onTap: () {
-                            Navigator.pushNamed(context, '/change-password',
-                                arguments: {
-                                  // === FIX 1: PASS THE THEME STATE ===
-                                  'isDarkMode': widget.isDarkMode,
-                                });
-                          },
+                          onTap: () =>
+                              Navigator.pushNamed(context, '/change-password'),
                         ),
                         _buildMenuItem(
                           icon: Icons.dark_mode_outlined,
-                          title: "Dark/Light Mode",
-                          subtitle: "Manage Your Interface",
+                          title: 'Dark/Light Mode',
+                          subtitle: 'Manage Your Interface',
                           isSwitch: true,
                           textColor: textColor,
                           subTextColor: subTextColor,
@@ -282,10 +230,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         _buildMenuItem(
                           icon: Icons.logout,
-                          title: "Log out",
+                          title: 'Log out',
                           subtitle: _isLoggingOut
-                              ? "Logging out..."
-                              : "Securely log out of account",
+                              ? 'Logging out...'
+                              : 'Securely log out of account',
                           isLogout: true,
                           isLoading: _isLoggingOut,
                           textColor: textColor,
@@ -294,22 +242,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onTap: _isLoggingOut ? null : _logout,
                         ),
                         const SizedBox(height: 20),
-                        Text(
-                          "More",
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: textColor),
-                        ),
+                        Text('More',
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: textColor)),
                         const SizedBox(height: 10),
                         _buildSimpleMenuItem(
                             icon: Icons.help_outline,
-                            title: "Help & Support",
+                            title: 'Help & Support',
                             textColor: textColor,
                             cardColor: cardColor),
                         _buildSimpleMenuItem(
                             icon: Icons.favorite_border,
-                            title: "About App",
+                            title: 'About App',
                             textColor: textColor,
                             cardColor: cardColor),
                       ],
@@ -347,33 +293,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     isLogout ? const Color(0xFFFFF5F5) : AppColors.lightOrange,
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                color: isLogout ? Colors.red : AppColors.iconOrange,
-                size: 24,
-              ),
+              child: Icon(icon,
+                  color: isLogout ? Colors.red : AppColors.iconOrange,
+                  size: 24),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
+                  Text(title,
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: textColor)),
                   const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: subTextColor,
-                    ),
-                  ),
+                  Text(subtitle,
+                      style: TextStyle(fontSize: 12, color: subTextColor)),
                 ],
               ),
             ),
@@ -384,20 +320,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: AppColors.redAlert, size: 20),
               ),
             if (isSwitch)
-              CupertinoSwitch(
-                value: widget.isDarkMode,
-                activeTrackColor: AppColors.primaryOrange,
-                onChanged: widget.onThemeChanged,
+              // Read live ThemeController value so the switch reflects actual state
+              ValueListenableBuilder<ThemeMode>(
+                valueListenable: ThemeController.instance,
+                builder: (_, mode, __) => CupertinoSwitch(
+                  value: mode == ThemeMode.dark,
+                  activeTrackColor: AppColors.primaryOrange,
+                  onChanged: (_) => ThemeController.instance.toggle(),
+                ),
               )
             else if (isLoading)
               const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
-                ),
-              )
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.grey)))
             else
               const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
           ],
@@ -413,38 +351,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required Color cardColor,
   }) {
     return Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              )
-            ]),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                color: AppColors.lightOrange,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: AppColors.iconOrange, size: 20),
-            ),
-            const SizedBox(width: 16),
-            Text(title,
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: textColor)),
-            const Spacer(),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-          ],
-        ));
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4))
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+                color: AppColors.lightOrange, shape: BoxShape.circle),
+            child: Icon(icon, color: AppColors.iconOrange, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Text(title,
+              style: TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
+          const Spacer(),
+          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+        ],
+      ),
+    );
   }
 }

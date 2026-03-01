@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../Services/auth_service.dart';
 import '../Models/user_model.dart';
 import '../Models/machine_model.dart';
+import '../core/theme/app_theme.dart';
 
 class AddFailureScreen extends StatefulWidget {
   const AddFailureScreen({super.key});
@@ -43,13 +44,6 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
     _machineTypeController.dispose();
     _descriptionController.dispose();
     super.dispose();
-  }
-
-  // Get theme values from arguments
-  bool get isDarkMode {
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    return args?['isDarkMode'] ?? true;
   }
 
   String _getSeverityText() {
@@ -130,11 +124,14 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
       final users = await AuthService().getTechnicians();
       if (!mounted) return;
       setState(() {
-        _technicians = users.where((u) => u.fullName.isNotEmpty && u.fullName != 'N/A').toList();
+        _technicians = users
+            .where((u) => u.fullName.isNotEmpty && u.fullName != 'N/A')
+            .toList();
       });
       // Debug: print loaded technicians
       debugPrint('Loaded technicians count: ${_technicians.length}');
-      debugPrint('Technicians: ${_technicians.map((e) => '${e.fullName}(${e.id})').join(', ')}');
+      debugPrint(
+          'Technicians: ${_technicians.map((e) => '${e.fullName}(${e.id})').join(', ')}');
     } catch (e) {
       if (mounted) _showSnackbar('Failed to load assignees: $e', isError: true);
     } finally {
@@ -160,12 +157,11 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDarkMode ? Colors.white : Colors.black;
-    final textColorLight = isDarkMode ? Colors.white70 : Colors.black54;
-    final bgColor =
-        isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFF5F5F5);
-    final cardBg = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
-    final borderColor = isDarkMode ? Colors.white24 : Colors.grey[300]!;
+    final textColor = context.cs.onSurface;
+    final textColorLight = context.cs.onSurfaceVariant;
+    final bgColor = Theme.of(context).scaffoldBackgroundColor;
+    final cardBg = context.cs.surface;
+    final borderColor = context.cs.outline;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -234,7 +230,8 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
               // Machine selection & Description
               Row(
                 children: [
-                  Expanded(child: _buildMachineDropdown(
+                  Expanded(
+                      child: _buildMachineDropdown(
                     value: _selectedMachineId,
                     label: 'Machine',
                     items: _machines
@@ -242,14 +239,17 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
                               value: m.id ?? '',
                               child: Text(
                                 '${m.machineModel} (${m.machineId})',
-                                style: GoogleFonts.poppins(color: textColor, fontSize: 14),
+                                style: GoogleFonts.poppins(
+                                    color: textColor, fontSize: 14),
                               ),
                             ))
                         .toList(),
                     onChanged: (val) {
                       setState(() {
                         _selectedMachineId = val;
-                        final machine = _machines.firstWhere((m) => (m.id ?? '') == val, orElse: () => _machines.first);
+                        final machine = _machines.firstWhere(
+                            (m) => (m.id ?? '') == val,
+                            orElse: () => _machines.first);
                         _machineNameController.text = machine.machineModel;
                         _machineTypeController.text = machine.machineType;
                       });
@@ -274,7 +274,6 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
                 ],
               ),
 
-
               const SizedBox(height: 16),
 
               // Assign To Dropdown
@@ -282,11 +281,13 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
                 value: _selectedAssignee,
                 label: 'Assign To',
                 items: _technicians
-                  .map((u) => DropdownMenuItem<String>(
-                      value: u.email,
-                      child: Text(u.fullName, style: GoogleFonts.poppins(color: textColor, fontSize: 14)),
-                    ))
-                  .toList(),
+                    .map((u) => DropdownMenuItem<String>(
+                          value: u.email,
+                          child: Text(u.fullName,
+                              style: GoogleFonts.poppins(
+                                  color: textColor, fontSize: 14)),
+                        ))
+                    .toList(),
                 onChanged: (value) => setState(() => _selectedAssignee = value),
                 textColor: textColor,
                 textColorLight: textColorLight,
@@ -314,8 +315,7 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
                   SliderTheme(
                     data: SliderThemeData(
                       activeTrackColor: _getSeverityColor(),
-                      inactiveTrackColor:
-                          isDarkMode ? Colors.white24 : Colors.grey[300],
+                      inactiveTrackColor: context.cs.outline,
                       thumbColor: _getSeverityColor(),
                       overlayColor: _getSeverityColor().withOpacity(0.2),
                       trackHeight: 4,
@@ -510,15 +510,20 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
           child: _isLoadingAssignees
               ? const SizedBox(
                   height: 40,
-                  child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                  child: Center(
+                      child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2))),
                 )
-                : items.isEmpty
+              : items.isEmpty
                   ? SizedBox(
                       height: 48,
                       child: Center(
                         child: Text(
                           'No assignees available',
-                          style: GoogleFonts.poppins(color: textColorLight, fontSize: 14),
+                          style: GoogleFonts.poppins(
+                              color: textColorLight, fontSize: 14),
                         ),
                       ),
                     )
@@ -527,7 +532,8 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
                         value: value,
                         hint: Text(
                           'Select assignee',
-                          style: GoogleFonts.poppins(color: textColorLight, fontSize: 14),
+                          style: GoogleFonts.poppins(
+                              color: textColorLight, fontSize: 14),
                         ),
                         isExpanded: true,
                         icon: Icon(Icons.keyboard_arrow_down, color: textColor),
@@ -574,7 +580,11 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
           child: _isLoadingMachines
               ? const SizedBox(
                   height: 40,
-                  child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                  child: Center(
+                      child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2))),
                 )
               : items.isEmpty
                   ? SizedBox(
@@ -582,7 +592,8 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
                       child: Center(
                         child: Text(
                           'No machines available',
-                          style: GoogleFonts.poppins(color: textColorLight, fontSize: 14),
+                          style: GoogleFonts.poppins(
+                              color: textColorLight, fontSize: 14),
                         ),
                       ),
                     )
@@ -591,7 +602,8 @@ class _AddFailureScreenState extends State<AddFailureScreen> {
                         value: value,
                         hint: Text(
                           'Select machine',
-                          style: GoogleFonts.poppins(color: textColorLight, fontSize: 14),
+                          style: GoogleFonts.poppins(
+                              color: textColorLight, fontSize: 14),
                         ),
                         isExpanded: true,
                         icon: Icon(Icons.keyboard_arrow_down, color: textColor),
