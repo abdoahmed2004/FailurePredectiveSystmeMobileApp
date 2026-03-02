@@ -6,7 +6,7 @@ class Machine {
   final String machineModel;
   final String machineType;
   final int status; // 0 = working, 1 = fault
-  
+
   // Sensor data fields
   final double? temperature;
   final double? pressure;
@@ -40,8 +40,10 @@ class Machine {
       id: json['_id'],
       machineId: json['machineId'],
       machineModel: json['machineModel'],
-      machineType: json['MachineType'], // Note: Backend uses 'MachineType' with capital M
-      status: int.tryParse(json['MachineStatus']?.toString() ?? '0') ?? 0, // Parse MachineStatus as int
+      machineType: json[
+          'MachineType'], // Note: Backend uses 'MachineType' with capital M
+      status: int.tryParse(json['MachineStatus']?.toString() ?? '0') ??
+          0, // Parse MachineStatus as int
       temperature: json['temperature']?.toDouble(),
       pressure: json['pressure']?.toDouble(),
       humidity: json['humidity']?.toDouble(),
@@ -66,12 +68,13 @@ class Machine {
   // Helper methods for status
   bool get isWorking => status == 0;
   bool get isFault => status == 1;
-  
+
   String get statusText => isWorking ? 'Working' : 'Fault';
-  
-  Color get statusColor => isWorking ? Colors.green : Colors.red;
-  
-  Color get statusDotColor => isWorking ? Colors.greenAccent : Colors.redAccent;
+
+  Color get statusColor => isWorking ? const Color(0xFF00E676) : Colors.red;
+
+  Color get statusDotColor =>
+      isWorking ? const Color(0xFF69F0AE) : Colors.redAccent;
 }
 
 class MachineResponse {

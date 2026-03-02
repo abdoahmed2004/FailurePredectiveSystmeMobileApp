@@ -473,7 +473,7 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
 
   // ── Tab bar ─────────────────────────────────────────────────────────────────
   Widget _buildTabBar() {
-    final tabs = ['Overview', 'Weekly', 'Analytic'];
+    final tabs = ['Overview', 'Weekly', 'Failures'];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(

@@ -37,10 +37,10 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
             _EmpMainContent(userName: widget.userName),
             const Center(
                 child: _PlaceholderTab(
-                    icon: Icons.shopping_bag_outlined, label: 'Jobs')),
+                    icon: Icons.chat_bubble_outline_outlined, label: 'chatbot')),
             const Center(
                 child: _PlaceholderTab(
-                    icon: Icons.schedule_outlined, label: 'Schedule')),
+                    icon: Icons.report_outlined, label: 'reports')),
             const ProfileScreen(),
           ],
         ),
@@ -52,8 +52,8 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
   Widget _buildBottomNav() {
     final items = [
       {'icon': 'assets/images/home.png', 'label': 'Home'},
-      {'icon': 'assets/images/menu - wallet.png', 'label': 'Jobs'},
-      {'icon': 'assets/images/circleicon.png', 'label': 'Schedule'},
+      {'icon': 'assets/images/chatai.png', 'label': 'Chatbot'},
+      {'icon': 'assets/images/circleicon.png', 'label': 'Reports'},
       {'icon': 'assets/images/profileicon.png', 'label': 'Profile'},
     ];
     return Container(

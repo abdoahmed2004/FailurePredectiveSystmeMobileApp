@@ -31,7 +31,7 @@ class _AllMachinesPageState extends State<AllMachinesPage> {
       });
 
       final machines = await _authService.getAllMachines();
-      
+
       if (mounted) {
         setState(() {
           _machines = machines;
@@ -51,7 +51,6 @@ class _AllMachinesPageState extends State<AllMachinesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 18.0),
@@ -103,91 +102,110 @@ class _AllMachinesPageState extends State<AllMachinesPage> {
               const SizedBox(height: 12),
 
               // ---------- Factory Row ----------
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                alignment: WrapAlignment.start,
-                crossAxisAlignment: WrapCrossAlignment.center,
+              // ---------- Stats Row ----------
+              Row(
                 children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      //color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.black12),
-                    ),
-                    child: Row(
-                      children: [
-                        const CircleAvatar(
-                            radius: 6, backgroundColor: Colors.blue),
-                        const SizedBox(width: 8),
-                        Text("Factory 1",
-                            style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w500,
-                                )),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.black12),
-                    ),
-                    child: Text(
-                      "${_machines.length} Machines",
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                  if (_machines.isNotEmpty) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  // Total Machines
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.green.shade200),
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Row(
+                      child: Column(
                         children: [
-                          CircleAvatar(radius: 4, backgroundColor: Colors.green),
-                          const SizedBox(width: 6),
+                          const Icon(Icons.precision_manufacturing_rounded,
+                              color: Color(0xFF2979FF), size: 26),
+                          const SizedBox(height: 6),
                           Text(
-                            "${_machines.where((m) => m.isWorking).length} Working",
+                            '${_machines.length}',
                             style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w500,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF2979FF),
+                            ),
+                          ),
+                          Text(
+                            'Total',
+                            style: GoogleFonts.poppins(
                               fontSize: 12,
-                              color: Colors.green.shade700,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade600,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  const SizedBox(width: 10),
+                  // Working
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.red.shade200),
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Row(
+                      child: Column(
                         children: [
-                          CircleAvatar(radius: 4, backgroundColor: Colors.red),
-                          const SizedBox(width: 6),
+                          const Icon(Icons.check_circle_rounded,
+                              color: Color(0xFF00C853), size: 26),
+                          const SizedBox(height: 6),
                           Text(
-                            "${_machines.where((m) => m.isFault).length} Fault",
+                            '${_machines.where((m) => m.isWorking).length}',
                             style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w500,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF00C853),
+                            ),
+                          ),
+                          Text(
+                            'Working',
+                            style: GoogleFonts.poppins(
                               fontSize: 12,
-                              color: Colors.red.shade700,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade600,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
+                  ),
+                  const SizedBox(width: 10),
+                  // Fault
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFEBEE),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.error_rounded,
+                              color: Color(0xFFFF1744), size: 26),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${_machines.where((m) => m.isFault).length}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFFF1744),
+                            ),
+                          ),
+                          Text(
+                            'Fault',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
 
@@ -261,8 +279,8 @@ class _AllMachinesPageState extends State<AllMachinesPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.precision_manufacturing_outlined, 
-                 size: 64, color: Colors.grey.shade400),
+            Icon(Icons.precision_manufacturing_outlined,
+                size: 64, color: Colors.grey.shade400),
             const SizedBox(height: 16),
             Text(
               'No machines found',
@@ -319,27 +337,10 @@ class _AllMachinesPageState extends State<AllMachinesPage> {
   }
 
   Color _getCardColor(int index, Machine machine) {
-    // Use darker/muted colors for fault machines
     if (machine.isFault) {
-      final faultColors = [
-        const Color(0xFF2E2E2E), // Dark gray
-        const Color(0xFF4A1A1A), // Dark red
-        const Color(0xFF3A1A1A), // Dark brown
-        const Color(0xFF2A2A2A), // Darker gray
-        const Color(0xFF4A2E2E), // Dark maroon
-      ];
-      return faultColors[index % faultColors.length];
+      return const Color(0xFF1E1E1E); // Dark charcoal for fault machines
     }
-    
-    // Use brighter colors for working machines
-    final workingColors = [
-      const Color(0xFF0057FF), // Blue
-      const Color(0xFF7A00FF), // Purple
-      const Color(0xFF0080FF), // Light blue
-      const Color(0xFFFF6400), // Orange
-      const Color(0xFF00A86B), // Green
-    ];
-    return workingColors[index % workingColors.length];
+    return const Color(0xFF2979FF); // Bright blue for working machines
   }
 
   Widget machineCardFromApi({
@@ -537,7 +538,8 @@ class _AllMachinesPageState extends State<AllMachinesPage> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => MachineDetailsPage(
-                      machineId: mc, // Using mc as both id and name for legacy function
+                      machineId:
+                          mc, // Using mc as both id and name for legacy function
                       machineName: mc,
                     ),
                   ),
@@ -557,5 +559,4 @@ class _AllMachinesPageState extends State<AllMachinesPage> {
       ),
     );
   }
-  }
-
+}
