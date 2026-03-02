@@ -6,8 +6,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fpms_app/core/theme/app_theme.dart';
-import 'package:fpms_app/core/theme/theme_controller.dart';
-
 import '../Services/auth_service.dart';
 import '../Models/machine_model.dart';
 import '../Models/failure_model.dart';
@@ -37,7 +35,8 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
             _EmpMainContent(userName: widget.userName),
             const Center(
                 child: _PlaceholderTab(
-                    icon: Icons.chat_bubble_outline_outlined, label: 'chatbot')),
+                    icon: Icons.chat_bubble_outline_outlined,
+                    label: 'chatbot')),
             const Center(
                 child: _PlaceholderTab(
                     icon: Icons.report_outlined, label: 'reports')),
@@ -134,6 +133,7 @@ class _EmpMainContentState extends State<_EmpMainContent> {
   List<Failure> _failures = [];
   bool _loadingMachines = false;
   bool _loadingFailures = false;
+  String _chartTimeframe = 'Monthly';
 
   @override
   void initState() {
@@ -302,16 +302,46 @@ class _EmpMainContentState extends State<_EmpMainContent> {
 
   // ── Failure line chart card ────────────────────────────────────────────────
   Widget _buildChartCard() {
-    const monthLabels = ['JUN', 'JULY', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-    final monthIndices = [6, 7, 8, 9, 10, 11, 12];
-    final counts = monthIndices
-        .map((m) => _failures
+    List<String> labels = [];
+    List<double> counts = [];
+
+    if (_chartTimeframe == 'Weekly') {
+      labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      final now = DateTime.now();
+      final weekStart = now.subtract(Duration(days: now.weekday - 1));
+      for (int i = 0; i < 7; i++) {
+        final d = weekStart.add(Duration(days: i));
+        counts.add(_failures
+            .where((f) =>
+                f.createdAt != null &&
+                f.createdAt!.year == d.year &&
+                f.createdAt!.month == d.month &&
+                f.createdAt!.day == d.day)
+            .length
+            .toDouble());
+      }
+    } else if (_chartTimeframe == 'Yearly') {
+      final now = DateTime.now();
+      for (int i = 4; i >= 0; i--) {
+        final y = now.year - i;
+        labels.add('$y');
+        counts.add(_failures
+            .where((f) => f.createdAt != null && f.createdAt!.year == y)
+            .length
+            .toDouble());
+      }
+    } else {
+      // Monthly
+      labels = ['JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+      final monthIndices = [6, 7, 8, 9, 10, 11, 12];
+      counts = monthIndices.map((m) {
+        return _failures
             .where((f) => f.createdAt != null && f.createdAt!.month == m)
             .length
-            .toDouble())
-        .toList();
-    final chartData =
-        _failures.isEmpty ? [5.0, 12.0, 8.0, 18.0, 22.0, 15.0, 10.0] : counts;
+            .toDouble();
+      }).toList();
+    }
+    final chartData = counts;
 
     return Container(
       margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -334,25 +364,39 @@ class _EmpMainContentState extends State<_EmpMainContent> {
               Text('Failures',
                   style: GoogleFonts.poppins(
                       color: context.cs.onSurfaceVariant, fontSize: 12)),
-              Text('${_failures.isEmpty ? 23 : _failures.length}',
+              Text('${_failures.length}',
                   style: GoogleFonts.poppins(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: context.cs.onSurface)),
             ]),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              height: 28,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
                   border: Border.all(color: context.cs.outline),
                   borderRadius: BorderRadius.circular(20)),
-              child: Row(children: [
-                Text('Monthly',
-                    style: GoogleFonts.poppins(
-                        fontSize: 11, color: context.cs.onSurfaceVariant)),
-                SizedBox(width: 4),
-                Icon(Icons.keyboard_arrow_down,
-                    size: 14, color: context.cs.onSurfaceVariant),
-              ]),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _chartTimeframe,
+                  icon: Icon(Icons.keyboard_arrow_down,
+                      size: 14, color: context.cs.onSurfaceVariant),
+                  dropdownColor: context.cs.surface,
+                  style: GoogleFonts.poppins(
+                      fontSize: 11, color: context.cs.onSurfaceVariant),
+                  items: ['Weekly', 'Monthly', 'Yearly'].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() => _chartTimeframe = val);
+                    }
+                  },
+                ),
+              ),
             ),
           ],
         ),
@@ -365,7 +409,7 @@ class _EmpMainContentState extends State<_EmpMainContent> {
         SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: monthLabels
+          children: labels
               .map((m) => Text(m,
                   style: GoogleFonts.poppins(
                       fontSize: 9,
@@ -435,7 +479,11 @@ class _EmpMainContentState extends State<_EmpMainContent> {
         return _EmpWeeklyTab(failures: _failures, loading: _loadingFailures);
       case 2:
         return Stack(children: [
-          _EmpAnalyticTab(failures: _failures, loading: _loadingFailures),
+          _EmpAnalyticTab(
+            failures: _failures,
+            loading: _loadingFailures,
+            onRefresh: _fetchAll,
+          ),
           Positioned(
             bottom: 16,
             right: 16,
@@ -472,10 +520,9 @@ class _EmpOverviewTab extends StatelessWidget {
   int get _total => machines.length;
   int get _activeCount => machines.where((m) => m.status == 0).length;
   int get _faultCount => machines.where((m) => m.status == 1).length;
-  int get _inactiveCount => _total - _activeCount - _faultCount;
   double get _activePct => _total == 0 ? 0 : _activeCount / _total;
   double get _faultPct => _total == 0 ? 0 : _faultCount / _total;
-  double get _inactivePct => _total == 0 ? 0 : _inactiveCount / _total;
+
   String get _perfLabel =>
       _total == 0 ? '0%' : '${(_activePct * 100).toStringAsFixed(1)}%';
   Color _dotColor(Machine m) {
@@ -555,18 +602,13 @@ class _EmpOverviewTab extends StatelessWidget {
                     ]),
               ),
               const SizedBox(width: 16),
-              _BubbleChart(
-                  activePct: _activePct,
-                  faultPct: _faultPct,
-                  inactivePct: _inactivePct),
+              _BubbleChart(activePct: _activePct, faultPct: _faultPct),
             ]),
             const SizedBox(height: 16),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
               _LegendDot(color: Color(0xFF5C6BC0), label: 'Active'),
               SizedBox(width: 16),
               _LegendDot(color: Color(0xFFFF9800), label: 'Maintenance.'),
-              SizedBox(width: 16),
-              _LegendDot(color: Color(0xFF1A1A2E), label: 'Inactive'),
             ]),
           ]),
         ),
@@ -619,7 +661,7 @@ class _EmpOverviewTab extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 //  ACTIVE JOBS CARD
 // ─────────────────────────────────────────────────────────────────────────────
-class _ActiveJobsCard extends StatelessWidget {
+class _ActiveJobsCard extends StatefulWidget {
   final int resolvedCount;
   final List<double> chartData;
   final bool loading;
@@ -629,9 +671,16 @@ class _ActiveJobsCard extends StatelessWidget {
       required this.loading});
 
   @override
+  State<_ActiveJobsCard> createState() => _ActiveJobsCardState();
+}
+
+class _ActiveJobsCardState extends State<_ActiveJobsCard> {
+  String _timeframe = 'Monthly';
+
+  @override
   Widget build(BuildContext context) {
-    final displayVal = resolvedCount > 0
-        ? '\$${(resolvedCount * 0.127).toStringAsFixed(1)}k'
+    final displayVal = widget.resolvedCount > 0
+        ? '\$${(widget.resolvedCount * 0.127).toStringAsFixed(1)}k'
         : '\$12.7k';
     return Container(
       padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -679,22 +728,36 @@ class _ActiveJobsCard extends StatelessWidget {
             ]),
           ]),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            height: 28,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
                 border: Border.all(color: context.cs.outline),
                 borderRadius: BorderRadius.circular(20)),
-            child: Row(children: [
-              Text('Monthly',
-                  style: GoogleFonts.poppins(
-                      fontSize: 11, color: context.cs.onSurfaceVariant)),
-              SizedBox(width: 4),
-              Icon(Icons.keyboard_arrow_down,
-                  size: 14, color: context.cs.onSurfaceVariant),
-            ]),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _timeframe,
+                icon: Icon(Icons.keyboard_arrow_down,
+                    size: 14, color: context.cs.onSurfaceVariant),
+                dropdownColor: context.cs.surface,
+                style: GoogleFonts.poppins(
+                    fontSize: 11, color: context.cs.onSurfaceVariant),
+                items: ['Weekly', 'Monthly', 'Yearly'].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() => _timeframe = val);
+                  }
+                },
+              ),
+            ),
           ),
         ]),
         const SizedBox(height: 14),
-        if (loading)
+        if (widget.loading)
           const SizedBox(
               height: 110,
               child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
@@ -715,7 +778,7 @@ class _ActiveJobsCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                   child: CustomPaint(
-                      painter: _LineChartPainter(data: chartData),
+                      painter: _LineChartPainter(data: widget.chartData),
                       size: Size.infinite)),
             ]),
           ),
@@ -737,13 +800,14 @@ class _EmpWeeklyTab extends StatefulWidget {
 }
 
 class _EmpWeeklyTabState extends State<_EmpWeeklyTab> {
-  late DateTime _weekStart, _today;
+  late DateTime _weekStart, _today, _selectedDay;
 
   @override
   void initState() {
     super.initState();
     _today = DateTime.now();
     _weekStart = _sundayOf(_today);
+    _selectedDay = _today;
   }
 
   DateTime _sundayOf(DateTime d) => d.subtract(Duration(days: d.weekday % 7));
@@ -873,38 +937,39 @@ class _EmpWeeklyTabState extends State<_EmpWeeklyTab> {
               children: List.generate(7, (i) {
                 final day = _weekStart.add(Duration(days: i));
                 final isT = _same(day, _today);
-                final isPast = day.isBefore(_today) &&
-                    !_same(day, _today) &&
-                    day.isAfter(_weekStart.subtract(const Duration(days: 1)));
-                return Column(children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: isT
-                        ? BoxDecoration(
-                            color: Color(0xFFFF9800),
-                            borderRadius: BorderRadius.circular(20))
-                        : null,
-                    child: Center(
-                        child: Text('${day.day}'.padLeft(2, '0'),
-                            style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight:
-                                    isT ? FontWeight.bold : FontWeight.w400,
-                                color: isT
-                                    ? Colors.white
-                                    : isPast
-                                        ? Color(0xFFFF9800)
-                                        : context.cs.onSurfaceVariant))),
-                  ),
-                  const SizedBox(height: 4),
-                  if (isT)
+                final isSelected = _same(day, _selectedDay);
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedDay = day),
+                  child: Column(children: [
                     Container(
-                        width: 5,
-                        height: 5,
-                        decoration: const BoxDecoration(
-                            color: Color(0xFFFF9800), shape: BoxShape.circle)),
-                ]);
+                      width: 36,
+                      height: 36,
+                      decoration: isSelected
+                          ? BoxDecoration(
+                              color: Color(0xFFFF9800),
+                              borderRadius: BorderRadius.circular(20))
+                          : null,
+                      child: Center(
+                          child: Text('${day.day}'.padLeft(2, '0'),
+                              style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.w400,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : context.cs.onSurfaceVariant))),
+                    ),
+                    const SizedBox(height: 4),
+                    if (isT && !isSelected)
+                      Container(
+                          width: 5,
+                          height: 5,
+                          decoration: const BoxDecoration(
+                              color: Color(0xFFFF9800),
+                              shape: BoxShape.circle)),
+                  ]),
+                );
               }),
             ),
           ]),
@@ -1036,7 +1101,9 @@ class _EmpWeeklyTabState extends State<_EmpWeeklyTab> {
 class _EmpAnalyticTab extends StatefulWidget {
   final List<Failure> failures;
   final bool loading;
-  const _EmpAnalyticTab({required this.failures, required this.loading});
+  final VoidCallback onRefresh;
+  const _EmpAnalyticTab(
+      {required this.failures, required this.loading, required this.onRefresh});
   @override
   State<_EmpAnalyticTab> createState() => _EmpAnalyticTabState();
 }
@@ -1102,7 +1169,7 @@ class _EmpAnalyticTabState extends State<_EmpAnalyticTab> {
       context: context,
       barrierColor: Colors.black.withOpacity(0.55),
       builder: (_) => _ResolveFailureDialog(failure: failure),
-    );
+    ).then((_) => widget.onRefresh());
   }
 
   Widget _pill(String label, int idx) {
@@ -1132,11 +1199,8 @@ class _EmpAnalyticTabState extends State<_EmpAnalyticTab> {
 //  Shared widgets
 // ─────────────────────────────────────────────────────────────────────────────
 class _BubbleChart extends StatelessWidget {
-  final double activePct, faultPct, inactivePct;
-  const _BubbleChart(
-      {required this.activePct,
-      required this.faultPct,
-      required this.inactivePct});
+  final double activePct, faultPct;
+  const _BubbleChart({required this.activePct, required this.faultPct});
   String _fmt(double v) => '${(v * 100).toStringAsFixed(0)}%';
   @override
   Widget build(BuildContext context) {
@@ -1161,14 +1225,6 @@ class _BubbleChart extends StatelessWidget {
                   color: Color(0xFFFF9800),
                   label: _fmt(faultPct),
                   fontSize: 13)),
-          Positioned(
-              right: 4,
-              bottom: 0,
-              child: _Bubble(
-                  diameter: base * 0.40,
-                  color: Color(0xFF1A1A2E),
-                  label: _fmt(inactivePct),
-                  fontSize: 11)),
         ]));
   }
 }
@@ -1490,7 +1546,7 @@ class _ResolveFailureDialogState extends State<_ResolveFailureDialog> {
                 child: DropdownButton<String>(
                   value: _selectedEngineer,
                   isExpanded: true,
-          dropdownColor: context.cs.surface,
+                  dropdownColor: context.cs.surface,
                   hint: Text('Select engineer',
                       style: GoogleFonts.poppins(
                           fontSize: 13, color: context.cs.onSurfaceVariant)),

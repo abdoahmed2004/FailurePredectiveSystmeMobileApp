@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fpms_app/core/theme/app_theme.dart';
-import 'package:fpms_app/core/theme/theme_controller.dart';
 
 import '../Services/auth_service.dart';
 import '../Models/user_model.dart';
@@ -143,6 +142,7 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
   List<Failure> _failures = [];
   bool _loadingMachines = false;
   bool _loadingFailures = false;
+  String _chartTimeframe = 'Monthly';
 
   @override
   void initState() {
@@ -375,19 +375,47 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
 
   // ── Failure line chart card ─────────────────────────────────────────────────
   Widget _buildChartCard() {
-    // Group real failures by month index (0..6 for Jun..Dec)
-    final monthLabels = ['JUN', 'JULY', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-    final monthIndices = [6, 7, 8, 9, 10, 11, 12]; // 1-indexed months
-    final counts = monthIndices.map((m) {
-      return _failures
-          .where((f) => f.createdAt != null && f.createdAt!.month == m)
-          .length
-          .toDouble();
-    }).toList();
+    List<String> labels = [];
+    List<double> counts = [];
 
-    // Fallback sample data if no real data
-    final chartData =
-        _failures.isEmpty ? [5.0, 12.0, 8.0, 18.0, 22.0, 15.0, 10.0] : counts;
+    if (_chartTimeframe == 'Weekly') {
+      labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      final now = DateTime.now();
+      final weekStart = now.subtract(Duration(days: now.weekday - 1));
+      for (int i = 0; i < 7; i++) {
+        final d = weekStart.add(Duration(days: i));
+        counts.add(_failures
+            .where((f) =>
+                f.createdAt != null &&
+                f.createdAt!.year == d.year &&
+                f.createdAt!.month == d.month &&
+                f.createdAt!.day == d.day)
+            .length
+            .toDouble());
+      }
+    } else if (_chartTimeframe == 'Yearly') {
+      final now = DateTime.now();
+      for (int i = 4; i >= 0; i--) {
+        final y = now.year - i;
+        labels.add('$y');
+        counts.add(_failures
+            .where((f) => f.createdAt != null && f.createdAt!.year == y)
+            .length
+            .toDouble());
+      }
+    } else {
+      // Monthly
+      labels = ['JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+      final monthIndices = [6, 7, 8, 9, 10, 11, 12];
+      counts = monthIndices.map((m) {
+        return _failures
+            .where((f) => f.createdAt != null && f.createdAt!.month == m)
+            .length
+            .toDouble();
+      }).toList();
+    }
+
+    final chartData = counts;
 
     return Container(
       margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -417,7 +445,7 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
                       style: GoogleFonts.poppins(
                           color: context.cs.onSurfaceVariant, fontSize: 12)),
                   Text(
-                    '${_failures.isEmpty ? 23 : _failures.length}',
+                    '${_failures.length}',
                     style: GoogleFonts.poppins(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -427,20 +455,32 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
                 ],
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                height: 28,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
                   border: Border.all(color: context.cs.outline),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Row(
-                  children: [
-                    Text('Monthly',
-                        style: GoogleFonts.poppins(
-                            fontSize: 11, color: context.cs.onSurfaceVariant)),
-                    SizedBox(width: 4),
-                    Icon(Icons.keyboard_arrow_down,
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _chartTimeframe,
+                    icon: Icon(Icons.keyboard_arrow_down,
                         size: 14, color: context.cs.onSurfaceVariant),
-                  ],
+                    dropdownColor: context.cs.surface,
+                    style: GoogleFonts.poppins(
+                        fontSize: 11, color: context.cs.onSurfaceVariant),
+                    items: ['Weekly', 'Monthly', 'Yearly'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() => _chartTimeframe = val);
+                      }
+                    },
+                  ),
                 ),
               ),
             ],
@@ -455,10 +495,10 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
             ),
           ),
           const SizedBox(height: 8),
-          // Month labels
+          // Labels
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: monthLabels
+            children: labels
                 .map((m) => Text(m,
                     style: GoogleFonts.poppins(
                         fontSize: 9,
@@ -759,7 +799,8 @@ class _FailuresTabState extends State<_FailuresTab> {
                     physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: _filtered.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (_, i) => _FailureCard(failure: _filtered[i]),
+                    itemBuilder: (_, i) => _FailureCard(
+                        failure: _filtered[i], onResolve: widget.onRefresh),
                   ),
           ),
         ],
@@ -799,7 +840,8 @@ class _FailuresTabState extends State<_FailuresTab> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _FailureCard extends StatelessWidget {
   final Failure failure;
-  const _FailureCard({required this.failure});
+  final VoidCallback onResolve;
+  const _FailureCard({required this.failure, required this.onResolve});
 
   @override
   Widget build(BuildContext context) {
@@ -908,7 +950,7 @@ class _FailureCard extends StatelessWidget {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () => _showResolveDialog(context, failure),
+                  onTap: () => _showResolveDialog(context, failure, onResolve),
                   child: Row(
                     children: [
                       Text(
@@ -932,13 +974,14 @@ class _FailureCard extends StatelessWidget {
     );
   }
 
-  void _showResolveDialog(BuildContext context, Failure f) {
+  void _showResolveDialog(
+      BuildContext context, Failure f, VoidCallback onResolve) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => _ResolveSheet(failure: f),
-    );
+    ).then((_) => onResolve());
   }
 
   String _formatDate(DateTime dt) {
@@ -1530,12 +1573,14 @@ class _WeeklyCalendarTab extends StatefulWidget {
 class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
   late DateTime _weekStart;
   late DateTime _today;
+  late DateTime _selectedDay;
 
   @override
   void initState() {
     super.initState();
     _today = DateTime.now();
     _weekStart = _sundayOf(_today);
+    _selectedDay = _today;
   }
 
   DateTime _sundayOf(DateTime d) => d.subtract(Duration(days: d.weekday % 7));
@@ -1638,38 +1683,44 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
                 children: List.generate(7, (i) {
                   final day = _weekStart.add(Duration(days: i));
                   final isToday = _same(day, _today);
-                  return Column(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: isToday
-                            ? BoxDecoration(
-                                color: Color(0xFFFF9800),
-                                borderRadius: BorderRadius.circular(20))
-                            : null,
-                        child: Center(
-                          child: Text(
-                            '${day.day}'.padLeft(2, '0'),
-                            style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight:
-                                    isToday ? FontWeight.bold : FontWeight.w400,
-                                color: isToday
-                                    ? Colors.white
-                                    : context.cs.onSurfaceVariant),
+                  final isSelected = _same(day, _selectedDay);
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedDay = day),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: isSelected
+                              ? BoxDecoration(
+                                  color: Color(0xFFFF9800),
+                                  borderRadius: BorderRadius.circular(20))
+                              : null,
+                          child: Center(
+                            child: Text(
+                              '${day.day}'.padLeft(2, '0'),
+                              style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.w400,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : context.cs.onSurfaceVariant),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      if (isToday)
-                        Container(
-                          width: 5,
-                          height: 5,
-                          decoration: const BoxDecoration(
-                              color: Color(0xFFFF9800), shape: BoxShape.circle),
-                        ),
-                    ],
+                        const SizedBox(height: 4),
+                        if (isToday && !isSelected)
+                          Container(
+                            width: 5,
+                            height: 5,
+                            decoration: const BoxDecoration(
+                                color: Color(0xFFFF9800),
+                                shape: BoxShape.circle),
+                          ),
+                      ],
+                    ),
                   );
                 }),
               ),
@@ -1710,11 +1761,8 @@ class _OverviewTab extends StatelessWidget {
       machines.where((m) => m.status == 0).length; // 0 = working
   int get _faultCount =>
       machines.where((m) => m.status == 1).length; // 1 = fault/maintenance
-  int get _inactiveCount => _total - _activeCount - _faultCount;
-
   double get _activePct => _total == 0 ? 0 : _activeCount / _total;
   double get _faultPct => _total == 0 ? 0 : _faultCount / _total;
-  double get _inactivePct => _total == 0 ? 0 : _inactiveCount / _total;
 
   // Performance = active ratio as a display percentage
   String get _perfLabel {
@@ -1791,7 +1839,6 @@ class _OverviewTab extends StatelessWidget {
                   _BubbleChart(
                     activePct: _activePct,
                     faultPct: _faultPct,
-                    inactivePct: _inactivePct,
                   ),
                 ],
               ),
@@ -1803,8 +1850,6 @@ class _OverviewTab extends StatelessWidget {
                   _LegendDot(color: Color(0xFF5C6BC0), label: 'Active'),
                   SizedBox(width: 16),
                   _LegendDot(color: Color(0xFFFF9800), label: 'Maintenance.'),
-                  SizedBox(width: 16),
-                  _LegendDot(color: Color(0xFF1A1A2E), label: 'Inactive'),
                 ],
               ),
             ],
@@ -1866,11 +1911,9 @@ class _OverviewTab extends StatelessWidget {
 class _BubbleChart extends StatelessWidget {
   final double activePct;
   final double faultPct;
-  final double inactivePct;
   const _BubbleChart({
     required this.activePct,
     required this.faultPct,
-    required this.inactivePct,
   });
 
   String _fmt(double v) => '${(v * 100).toStringAsFixed(0)}%';
@@ -1881,8 +1924,6 @@ class _BubbleChart extends StatelessWidget {
     const base = 120.0;
     final activeD = base;
     final faultD = base * 0.58;
-    final inactiveD = base * 0.40;
-
     return SizedBox(
       width: 155,
       height: 130,
@@ -1909,17 +1950,6 @@ class _BubbleChart extends StatelessWidget {
               color: Color(0xFFFF9800),
               label: _fmt(faultPct),
               fontSize: 13,
-            ),
-          ),
-          // ── Small dark circle (Inactive)
-          Positioned(
-            right: 4,
-            bottom: 0,
-            child: _Bubble(
-              diameter: inactiveD,
-              color: Color(0xFF1A1A2E),
-              label: _fmt(inactivePct),
-              fontSize: 11,
             ),
           ),
         ],
