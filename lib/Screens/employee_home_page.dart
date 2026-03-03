@@ -345,7 +345,7 @@ class _EmpMainContentState extends State<_EmpMainContent> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'start now and take better\ncare of your business',
+                  'start now and take better care of your business',
                   style: GoogleFonts.poppins(
                     fontSize: 11,
                     color: const Color(0xFFD96B27).withValues(alpha: 0.75),
