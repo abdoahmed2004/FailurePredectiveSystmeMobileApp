@@ -839,47 +839,114 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
   bool _same(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  // Failures per day of current week for each category
-  List<double> _seriesForWeek(bool isTemperature) {
-    return List.generate(7, (dayIdx) {
-      final d = _weekStart.add(Duration(days: dayIdx));
-      final dayFailures = widget.failures.where((f) {
-        if (f.createdAt == null) return false;
-        return _same(f.createdAt!, d);
+  String _chartTimeframe = 'Weekly';
+
+  List<String> get _xAxisLabels {
+    if (_chartTimeframe == 'Weekly') {
+      return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    } else if (_chartTimeframe == 'Monthly') {
+      final now = DateTime.now();
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec'
+      ];
+      return List.generate(7, (i) {
+        final m = DateTime(now.year, now.month - 6 + i, 1);
+        return months[m.month - 1];
       });
-      if (isTemperature) {
-        return dayFailures
-            .where((f) => f.severityLevel.toLowerCase() == 'critical')
-            .length
-            .toDouble();
-      } else {
-        return dayFailures
-            .where((f) => f.severityLevel.toLowerCase() != 'critical')
-            .length
-            .toDouble();
-      }
-    });
+    } else {
+      final now = DateTime.now();
+      return List.generate(7, (i) => '${now.year - 6 + i}');
+    }
   }
 
-  // Sample fallback data if no real data exists
+  // Failures for timeframe
+  List<double> _seriesForTimeframe(bool isTemperature) {
+    if (_chartTimeframe == 'Weekly') {
+      return List.generate(7, (dayIdx) {
+        final d = _weekStart.add(Duration(days: dayIdx));
+        final dayFailures = widget.failures.where((f) {
+          if (f.createdAt == null) return false;
+          return _same(f.createdAt!, d);
+        });
+        if (isTemperature) {
+          return dayFailures
+              .where((f) => f.severityLevel.toLowerCase() == 'critical')
+              .length
+              .toDouble();
+        } else {
+          return dayFailures
+              .where((f) => f.severityLevel.toLowerCase() != 'critical')
+              .length
+              .toDouble();
+        }
+      });
+    } else if (_chartTimeframe == 'Monthly') {
+      final now = DateTime.now();
+      return List.generate(7, (monthIdx) {
+        final targetDate = DateTime(now.year, now.month - 6 + monthIdx, 1);
+        final monthFailures = widget.failures.where((f) {
+          if (f.createdAt == null) return false;
+          return f.createdAt!.year == targetDate.year &&
+              f.createdAt!.month == targetDate.month;
+        });
+        if (isTemperature) {
+          return monthFailures
+              .where((f) => f.severityLevel.toLowerCase() == 'critical')
+              .length
+              .toDouble();
+        } else {
+          return monthFailures
+              .where((f) => f.severityLevel.toLowerCase() != 'critical')
+              .length
+              .toDouble();
+        }
+      });
+    } else {
+      final now = DateTime.now();
+      return List.generate(7, (yearIdx) {
+        final targetYear = now.year - 6 + yearIdx;
+        final yearFailures = widget.failures.where((f) {
+          if (f.createdAt == null) return false;
+          return f.createdAt!.year == targetYear;
+        });
+        if (isTemperature) {
+          return yearFailures
+              .where((f) => f.severityLevel.toLowerCase() == 'critical')
+              .length
+              .toDouble();
+        } else {
+          return yearFailures
+              .where((f) => f.severityLevel.toLowerCase() != 'critical')
+              .length
+              .toDouble();
+        }
+      });
+    }
+  }
+
+  // Real data only
   List<double> get _tempData {
-    final d = _seriesForWeek(true);
-    return d.every((v) => v == 0)
-        ? [60.0, 95.0, 45.0, 75.0, 50.0, 30.0, 55.0]
-        : d;
+    return _seriesForTimeframe(true);
   }
 
   List<double> get _spareData {
-    final d = _seriesForWeek(false);
-    return d.every((v) => v == 0)
-        ? [30.0, 50.0, 70.0, 45.0, 65.0, 80.0, 40.0]
-        : d;
+    return _seriesForTimeframe(false);
   }
 
   @override
   Widget build(BuildContext context) {
     const dayLetters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-    const dayFull = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return ListView(
       padding: EdgeInsets.symmetric(horizontal: 20),
@@ -1019,16 +1086,35 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: context.cs.onSurface)),
-                  Row(
-                    children: [
-                      Text('Weekly',
-                          style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF5C3A9E))),
-                      const Icon(Icons.keyboard_arrow_down_rounded,
-                          color: Color(0xFF5C3A9E), size: 18),
-                    ],
+                  Container(
+                    height: 28,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: context.cs.outline),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _chartTimeframe,
+                        icon: Icon(Icons.keyboard_arrow_down,
+                            size: 14, color: context.cs.onSurfaceVariant),
+                        dropdownColor: context.cs.surface,
+                        style: GoogleFonts.poppins(
+                            fontSize: 11, color: context.cs.onSurfaceVariant),
+                        items:
+                            ['Weekly', 'Monthly', 'Yearly'].map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => _chartTimeframe = val);
+                          }
+                        },
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1075,16 +1161,16 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
               ),
               const SizedBox(height: 8),
 
-              // X-axis day labels (Sun–Sat), today highlighted purple
+              // X-axis day labels (Dynamic), today highlighted purple
               Row(
                 children: [
                   const SizedBox(width: 32),
                   Expanded(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: dayFull.asMap().entries.map((e) {
-                        final dayDate = _weekStart.add(Duration(days: e.key));
-                        final isToday = _same(dayDate, _today);
+                      children: _xAxisLabels.asMap().entries.map((e) {
+                        final isToday = _chartTimeframe == 'Weekly' &&
+                            e.key == _today.weekday % 7;
                         return Text(
                           e.value,
                           style: GoogleFonts.poppins(

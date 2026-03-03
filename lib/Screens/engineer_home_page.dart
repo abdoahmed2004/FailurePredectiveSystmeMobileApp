@@ -563,12 +563,7 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
   Widget _buildTabBody() {
     switch (_tabIndex) {
       case 0:
-        return _OverviewTab(
-          machines: _machines,
-          failures: _failures,
-          loadingMachines: _loadingMachines,
-          loadingFailures: _loadingFailures,
-        );
+        return _OverviewTab(machines: _machines, loading: _loadingMachines);
       case 1:
         return _WeeklyCalendarTab(
           failures: _failures,
@@ -1574,6 +1569,7 @@ class _ReportFailureSheetState extends State<_ReportFailureSheet> {
 class _WeeklyCalendarTab extends StatefulWidget {
   final List<Failure> failures;
   final bool loading;
+
   const _WeeklyCalendarTab({
     required this.failures,
     required this.loading,
@@ -1629,47 +1625,114 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
   bool _same(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  // Failures per day of current week for each category
-  List<double> _seriesForWeek(bool isTemperature) {
-    return List.generate(7, (dayIdx) {
-      final d = _weekStart.add(Duration(days: dayIdx));
-      final dayFailures = widget.failures.where((f) {
-        if (f.createdAt == null) return false;
-        return _same(f.createdAt!, d);
+  String _chartTimeframe = 'Weekly';
+
+  List<String> get _xAxisLabels {
+    if (_chartTimeframe == 'Weekly') {
+      return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    } else if (_chartTimeframe == 'Monthly') {
+      final now = DateTime.now();
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec'
+      ];
+      return List.generate(7, (i) {
+        final m = DateTime(now.year, now.month - 6 + i, 1);
+        return months[m.month - 1];
       });
-      if (isTemperature) {
-        return dayFailures
-            .where((f) => f.severityLevel.toLowerCase() == 'critical')
-            .length
-            .toDouble();
-      } else {
-        return dayFailures
-            .where((f) => f.severityLevel.toLowerCase() != 'critical')
-            .length
-            .toDouble();
-      }
-    });
+    } else {
+      final now = DateTime.now();
+      return List.generate(7, (i) => '${now.year - 6 + i}');
+    }
   }
 
-  // Sample fallback data if no real data exists
+  // Failures for timeframe
+  List<double> _seriesForTimeframe(bool isTemperature) {
+    if (_chartTimeframe == 'Weekly') {
+      return List.generate(7, (dayIdx) {
+        final d = _weekStart.add(Duration(days: dayIdx));
+        final dayFailures = widget.failures.where((f) {
+          if (f.createdAt == null) return false;
+          return _same(f.createdAt!, d);
+        });
+        if (isTemperature) {
+          return dayFailures
+              .where((f) => f.severityLevel.toLowerCase() == 'critical')
+              .length
+              .toDouble();
+        } else {
+          return dayFailures
+              .where((f) => f.severityLevel.toLowerCase() != 'critical')
+              .length
+              .toDouble();
+        }
+      });
+    } else if (_chartTimeframe == 'Monthly') {
+      final now = DateTime.now();
+      return List.generate(7, (monthIdx) {
+        final targetDate = DateTime(now.year, now.month - 6 + monthIdx, 1);
+        final monthFailures = widget.failures.where((f) {
+          if (f.createdAt == null) return false;
+          return f.createdAt!.year == targetDate.year &&
+              f.createdAt!.month == targetDate.month;
+        });
+        if (isTemperature) {
+          return monthFailures
+              .where((f) => f.severityLevel.toLowerCase() == 'critical')
+              .length
+              .toDouble();
+        } else {
+          return monthFailures
+              .where((f) => f.severityLevel.toLowerCase() != 'critical')
+              .length
+              .toDouble();
+        }
+      });
+    } else {
+      final now = DateTime.now();
+      return List.generate(7, (yearIdx) {
+        final targetYear = now.year - 6 + yearIdx;
+        final yearFailures = widget.failures.where((f) {
+          if (f.createdAt == null) return false;
+          return f.createdAt!.year == targetYear;
+        });
+        if (isTemperature) {
+          return yearFailures
+              .where((f) => f.severityLevel.toLowerCase() == 'critical')
+              .length
+              .toDouble();
+        } else {
+          return yearFailures
+              .where((f) => f.severityLevel.toLowerCase() != 'critical')
+              .length
+              .toDouble();
+        }
+      });
+    }
+  }
+
+  // Real data only
   List<double> get _tempData {
-    final d = _seriesForWeek(true);
-    return d.every((v) => v == 0)
-        ? [60.0, 95.0, 45.0, 75.0, 50.0, 30.0, 55.0]
-        : d;
+    return _seriesForTimeframe(true);
   }
 
   List<double> get _spareData {
-    final d = _seriesForWeek(false);
-    return d.every((v) => v == 0)
-        ? [30.0, 50.0, 70.0, 45.0, 65.0, 80.0, 40.0]
-        : d;
+    return _seriesForTimeframe(false);
   }
 
   @override
   Widget build(BuildContext context) {
-    const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-    const dayFull = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayLetters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
     return ListView(
       padding: EdgeInsets.symmetric(horizontal: 20),
       physics: BouncingScrollPhysics(),
@@ -1710,7 +1773,7 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
               // Day labels
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: dayLabels.asMap().entries.map((e) {
+                children: dayLetters.asMap().entries.map((e) {
                   final d = _weekStart.add(Duration(days: e.key));
                   final isToday = _same(d, _today);
                   return SizedBox(
@@ -1801,21 +1864,40 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Performance Overview',
+                  Text('fault Overview',
                       style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: context.cs.onSurface)),
-                  Row(
-                    children: [
-                      Text('Weekly',
-                          style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF5C3A9E))),
-                      const Icon(Icons.keyboard_arrow_down_rounded,
-                          color: Color(0xFF5C3A9E), size: 18),
-                    ],
+                  Container(
+                    height: 28,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: context.cs.outline),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _chartTimeframe,
+                        icon: Icon(Icons.keyboard_arrow_down,
+                            size: 14, color: context.cs.onSurfaceVariant),
+                        dropdownColor: context.cs.surface,
+                        style: GoogleFonts.poppins(
+                            fontSize: 11, color: context.cs.onSurfaceVariant),
+                        items:
+                            ['Weekly', 'Monthly', 'Yearly'].map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => _chartTimeframe = val);
+                          }
+                        },
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1862,16 +1944,16 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
               ),
               const SizedBox(height: 8),
 
-              // X-axis day labels (Sun–Sat), today highlighted purple
+              // X-axis day labels (Dynamic), today highlighted purple
               Row(
                 children: [
                   const SizedBox(width: 32),
                   Expanded(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: dayFull.asMap().entries.map((e) {
-                        final dayDate = _weekStart.add(Duration(days: e.key));
-                        final isToday = _same(dayDate, _today);
+                      children: _xAxisLabels.asMap().entries.map((e) {
+                        final isToday = _chartTimeframe == 'Weekly' &&
+                            e.key == _today.weekday % 7;
                         return Text(
                           e.value,
                           style: GoogleFonts.poppins(
@@ -1942,19 +2024,181 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  Dual-line chart painter (Temperature blue vs spare parts orange)
+// ─────────────────────────────────────────────────────────────────────────────
+class _DualLineChartPainter extends CustomPainter {
+  final List<double> series1; // Temperature (blue)
+  final List<double> series2; // spare parts (orange)
+  final Color color1;
+  final Color color2;
+  final int todayIndex; // column to highlight on x-axis
+  final String tooltipLabel;
+  final int tooltipIndex; // which point shows the tooltip
+
+  const _DualLineChartPainter({
+    required this.series1,
+    required this.series2,
+    required this.color1,
+    required this.color2,
+    required this.tooltipLabel,
+    required this.tooltipIndex,
+    required this.todayIndex,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final fixedMax = 100.0;
+
+    // Horizontal grid lines at 0, 25, 50, 100
+    final gridPaint = Paint()
+      ..color = const Color(0xFFEEEEEE)
+      ..strokeWidth = 1;
+    for (final v in [0.0, 25.0, 50.0, 100.0]) {
+      final y = size.height * (1 - v / fixedMax);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    // Compute screen points from data
+    List<Offset> pts(List<double> data) => [
+          for (int i = 0; i < data.length; i++)
+            Offset(
+              size.width * i / (data.length - 1),
+              size.height * (1 - data[i] / fixedMax),
+            )
+        ];
+
+    final p1 = pts(series1); // blue – temperature
+    final p2 = pts(series2); // orange – spare parts
+
+    // Filled area for spare parts (orange, teal/green tint)
+    final fillPath2 = Path()..moveTo(p2.first.dx, size.height);
+    for (final p in p2) fillPath2.lineTo(p.dx, p.dy);
+    fillPath2
+      ..lineTo(p2.last.dx, size.height)
+      ..close();
+    canvas.drawPath(
+      fillPath2,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            const Color(0xFF26A69A).withOpacity(0.22),
+            const Color(0xFF26A69A).withOpacity(0.02),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+    );
+
+    // Filled area for temperature (blue)
+    final fillPath1 = Path()..moveTo(p1.first.dx, size.height);
+    for (final p in p1) fillPath1.lineTo(p.dx, p.dy);
+    fillPath1
+      ..lineTo(p1.last.dx, size.height)
+      ..close();
+    canvas.drawPath(
+      fillPath1,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            color1.withOpacity(0.12),
+            color1.withOpacity(0.01),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+    );
+
+    // Draw smooth cubic line for a series
+    void drawLine(List<Offset> points, Color color) {
+      final path = Path()..moveTo(points.first.dx, points.first.dy);
+      for (int i = 1; i < points.length; i++) {
+        final cp1 =
+            Offset((points[i - 1].dx + points[i].dx) / 2, points[i - 1].dy);
+        final cp2 = Offset((points[i - 1].dx + points[i].dx) / 2, points[i].dy);
+        path.cubicTo(
+            cp1.dx, cp1.dy, cp2.dx, cp2.dy, points[i].dx, points[i].dy);
+      }
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = color
+          ..strokeWidth = 2.0
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+
+    drawLine(p2, color2);
+    drawLine(p1, color1);
+
+    // Draw data points
+    void drawPoints(List<Offset> points, Color color) {
+      for (final p in points) {
+        // Outer dot
+        canvas.drawCircle(p, 4, Paint()..color = color);
+        // Inner white dot
+        canvas.drawCircle(p, 2, Paint()..color = Colors.white);
+      }
+    }
+
+    drawPoints(p2, color2);
+    drawPoints(p1, color1);
+
+    // Highlight vertical line for today
+    if (todayIndex >= 0 && todayIndex < 7) {
+      final x = p1[todayIndex].dx;
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x, size.height),
+        Paint()
+          ..color = const Color(0xFF5C3A9E).withOpacity(0.3)
+          ..strokeWidth = 1,
+      );
+    }
+
+    // Optional tooltip (e.g. "+1.7%" bubble)
+    if (tooltipIndex >= 0 && tooltipIndex < 7 && tooltipLabel.isNotEmpty) {
+      final pt = p1[tooltipIndex];
+      final rRect = RRect.fromRectAndRadius(
+        Rect.fromCenter(
+            center: Offset(pt.dx, pt.dy - 16), width: 34, height: 18),
+        const Radius.circular(8),
+      );
+      canvas.drawRRect(rRect, Paint()..color = color1);
+
+      // Caret
+      final path = Path()
+        ..moveTo(pt.dx - 4, pt.dy - 8)
+        ..lineTo(pt.dx, pt.dy - 2)
+        ..lineTo(pt.dx + 4, pt.dy - 8)
+        ..close();
+      canvas.drawPath(path, Paint()..color = color1);
+
+      // Tooltip text
+      final tp = TextPainter(
+        text: TextSpan(
+          text: tooltipLabel,
+          style: GoogleFonts.poppins(
+              color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(
+          canvas, Offset(pt.dx - tp.width / 2, pt.dy - 16 - tp.height / 2));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  OVERVIEW TAB
 // ─────────────────────────────────────────────────────────────────────────────
 class _OverviewTab extends StatelessWidget {
   final List<Machine> machines;
-  final List<Failure> failures;
-  final bool loadingMachines;
-  final bool loadingFailures;
-  const _OverviewTab({
-    required this.machines,
-    required this.failures,
-    required this.loadingMachines,
-    required this.loadingFailures,
-  });
+  final bool loading;
+  const _OverviewTab({required this.machines, required this.loading});
 
   // ── Computed stats from real data ──────────────────────────────────────────
   int get _total => machines.length;
@@ -1981,7 +2225,7 @@ class _OverviewTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (loadingMachines) {
+    if (loading) {
       return const Center(
           child: CircularProgressIndicator(color: Color(0xFF5C3A9E)));
     }
@@ -2104,167 +2348,6 @@ class _OverviewTab extends StatelessWidget {
       ],
     );
   }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  Dual-line chart painter (Temperature blue vs spare parts orange)
-// ─────────────────────────────────────────────────────────────────────────────
-class _DualLineChartPainter extends CustomPainter {
-  final List<double> series1; // Temperature (blue)
-  final List<double> series2; // spare parts (orange)
-  final Color color1;
-  final Color color2;
-  final int todayIndex; // column to highlight on x-axis
-  final String tooltipLabel;
-  final int tooltipIndex; // which point shows the tooltip
-
-  const _DualLineChartPainter({
-    required this.series1,
-    required this.series2,
-    required this.color1,
-    required this.color2,
-    required this.tooltipLabel,
-    required this.tooltipIndex,
-    required this.todayIndex,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final fixedMax = 100.0;
-
-    // Horizontal grid lines at 0, 25, 50, 100
-    final gridPaint = Paint()
-      ..color = const Color(0xFFEEEEEE)
-      ..strokeWidth = 1;
-    for (final v in [0.0, 25.0, 50.0, 100.0]) {
-      final y = size.height * (1 - v / fixedMax);
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-
-    // Compute screen points from data
-    List<Offset> pts(List<double> data) => [
-          for (int i = 0; i < data.length; i++)
-            Offset(
-              size.width * i / (data.length - 1),
-              size.height * (1 - data[i] / fixedMax),
-            )
-        ];
-
-    final p1 = pts(series1); // blue – temperature
-    final p2 = pts(series2); // orange – spare parts
-
-    // Filled area for spare parts (orange, teal/green tint)
-    final fillPath2 = Path()..moveTo(p2.first.dx, size.height);
-    for (final p in p2) fillPath2.lineTo(p.dx, p.dy);
-    fillPath2
-      ..lineTo(p2.last.dx, size.height)
-      ..close();
-    canvas.drawPath(
-      fillPath2,
-      Paint()
-        ..shader = LinearGradient(
-          colors: [
-            const Color(0xFF26A69A).withOpacity(0.22),
-            const Color(0xFF26A69A).withOpacity(0.02),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
-    );
-
-    // Filled area for temperature (blue)
-    final fillPath1 = Path()..moveTo(p1.first.dx, size.height);
-    for (final p in p1) fillPath1.lineTo(p.dx, p.dy);
-    fillPath1
-      ..lineTo(p1.last.dx, size.height)
-      ..close();
-    canvas.drawPath(
-      fillPath1,
-      Paint()
-        ..shader = LinearGradient(
-          colors: [
-            color1.withOpacity(0.12),
-            color1.withOpacity(0.01),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
-    );
-
-    // Draw smooth cubic line for a series
-    void drawLine(List<Offset> points, Color color) {
-      final path = Path()..moveTo(points.first.dx, points.first.dy);
-      for (int i = 1; i < points.length; i++) {
-        final cp1 =
-            Offset((points[i - 1].dx + points[i].dx) / 2, points[i - 1].dy);
-        final cp2 = Offset((points[i - 1].dx + points[i].dx) / 2, points[i].dy);
-        path.cubicTo(
-            cp1.dx, cp1.dy, cp2.dx, cp2.dy, points[i].dx, points[i].dy);
-      }
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = color
-          ..strokeWidth = 2.0
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round,
-      );
-    }
-
-    drawLine(p2, color2); // spare parts (orange) – behind
-    drawLine(p1, color1); // temperature (blue) – in front
-
-    // Tooltip dot on series1 at tooltipIndex
-    if (tooltipIndex < p1.length) {
-      final tp = p1[tooltipIndex];
-      canvas.drawCircle(tp, 5, Paint()..color = color1);
-      canvas.drawCircle(
-          tp,
-          5,
-          Paint()
-            ..color = Colors.white
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 2);
-      _drawTooltip(canvas, tp, tooltipLabel, color1);
-    }
-  }
-
-  void _drawTooltip(Canvas canvas, Offset pt, String label, Color color) {
-    const tw = 52.0;
-    const th = 22.0;
-    const r = 11.0;
-    const triH = 6.0;
-    final left = (pt.dx - tw / 2).clamp(0.0, double.infinity);
-    final top = pt.dy - th - triH - 8;
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          Rect.fromLTWH(left, top, tw, th), const Radius.circular(r)),
-      Paint()..color = color,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(pt.dx - 5, top + th)
-        ..lineTo(pt.dx + 5, top + th)
-        ..lineTo(pt.dx, top + th + triH)
-        ..close(),
-      Paint()..color = color,
-    );
-    final tp = TextPainter(
-      text: TextSpan(
-        text: label,
-        style: TextStyle(
-            color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    tp.paint(
-        canvas, Offset(left + (tw - tp.width) / 2, top + (th - tp.height) / 2));
-  }
-
-  @override
-  bool shouldRepaint(covariant _DualLineChartPainter old) =>
-      old.series1 != series1 || old.series2 != series2;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
