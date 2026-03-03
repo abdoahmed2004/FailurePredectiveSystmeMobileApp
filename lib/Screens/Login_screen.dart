@@ -195,42 +195,47 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 10),
 
                 // Remember me + Forgot password
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: rememberMe,
-                          onChanged: (value) {
-                            setState(() {
-                              rememberMe = value ?? false;
-                            });
-                          },
-                          activeColor: const Color(0xFFFF9800),
-                        ),
-                        Text(
-                          "Remember me",
-                          style: GoogleFonts.poppins(
-                              color: Colors.white70, fontSize: 14),
-                        ),
-                      ],
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushNamed(
-                            context, '/forgot-password'); // Use actual route
-                        //_showSnackbar("Forgot password functionality not implemented.", isError: false);
-                      },
-                      child: Text(
-                        "Forgot password?",
-                        style: GoogleFonts.poppins(
-                          color: const Color(0xFFFF9800),
-                          fontSize: 14,
-                        ),
+                SizedBox(
+                  width: double.infinity,
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Checkbox(
+                            value: rememberMe,
+                            visualDensity: VisualDensity.compact,
+                            onChanged: (value) {
+                              setState(() {
+                                rememberMe = value ?? false;
+                              });
+                            },
+                            activeColor: const Color(0xFFFF9800),
+                          ),
+                          Text(
+                            "Remember me",
+                            style: GoogleFonts.poppins(
+                                color: Colors.white70, fontSize: 14),
+                          ),
+                        ],
                       ),
-                    )
-                  ],
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(
+                              context, '/forgot-password'); // Use actual route
+                        },
+                        child: Text(
+                          "Forgot password?",
+                          style: GoogleFonts.poppins(
+                            color: const Color(0xFFFF9800),
+                            fontSize: 14,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 25),
