@@ -9,7 +9,8 @@ import '../Models/failure_model.dart';
 // Base URL resolver:
 // - You can override at build time with `--dart-define=API_BASE_URL=http://192.168.1.4:3000/api`
 // - Defaults: Android -> 10.0.2.2 (emulator), others -> 127.0.0.1
-const String _envBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: '');
+const String _envBaseUrl =
+    String.fromEnvironment('API_BASE_URL', defaultValue: '');
 final String baseUrl = _resolveBaseUrl();
 const Duration requestTimeout = Duration(seconds: 10);
 
@@ -17,13 +18,14 @@ String _resolveBaseUrl() {
   if (_envBaseUrl.isNotEmpty) return _envBaseUrl;
   try {
     if (Platform.isAndroid) {
-      // Android emulator mapping to host machine
-      return 'http://10.0.2.2:3000/api';
+      // Use Mac's local IP address so physical Android devices via USB/WiFi can connect
+      return 'http://192.168.1.31:3000/api';
     }
   } catch (_) {}
-  // Default for iOS simulator, desktop and others
-  return 'http://127.0.0.1:3000/api';
+  // Default for iOS simulator, desktop and others (also using local IP for consistency)
+  return 'http://192.168.1.31:3000/api';
 }
+
 class AuthService {
   static final AuthService _instance = AuthService._internal();
   factory AuthService() => _instance;
@@ -32,11 +34,12 @@ class AuthService {
   final Map<String, String> _headers = {
     'Content-Type': 'application/json; charset=UTF-8',
   };
-  
+
   String? _authToken;
 
   // Helpful debug logger for outgoing requests
-  void _debugRequest(String method, Uri url, [String? body, Map<String, String>? headers]) {
+  void _debugRequest(String method, Uri url,
+      [String? body, Map<String, String>? headers]) {
     // Use print so it's visible in Flutter debug console
     print('HTTP $method -> $url');
     if (headers != null) {
@@ -78,7 +81,7 @@ class AuthService {
     required String role,
   }) async {
     final url = Uri.parse('$baseUrl/register');
-    
+
     final body = jsonEncode({
       'fullName': fullName,
       'email': email,
@@ -88,7 +91,9 @@ class AuthService {
 
     try {
       _debugRequest('POST', url, body);
-      final response = await http.post(url, headers: _headers, body: body).timeout(requestTimeout);
+      final response = await http
+          .post(url, headers: _headers, body: body)
+          .timeout(requestTimeout);
 
       if (response.statusCode == 201) {
         final jsonResponse = jsonDecode(response.body);
@@ -102,64 +107,75 @@ class AuthService {
         throw Exception(errorBody['message'] ?? 'Failed to register user.');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
   }
 
-
-Future<String> resendVerificationEmail({required String email}) async {
+  Future<String> resendVerificationEmail({required String email}) async {
     final url = Uri.parse('$baseUrl/resend-verification');
-    
+
     try {
       final body = jsonEncode({'email': email});
       _debugRequest('POST', url, body);
-      final response = await http.post(url, headers: _headers, body: body).timeout(requestTimeout);
+      final response = await http
+          .post(url, headers: _headers, body: body)
+          .timeout(requestTimeout);
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         return jsonResponse['message'] ?? 'Email resent successfully!';
       } else {
         final errorBody = jsonDecode(response.body);
-        throw Exception(errorBody['message'] ?? 'Failed to resend verification email.');
+        throw Exception(
+            errorBody['message'] ?? 'Failed to resend verification email.');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
-}
+  }
 
-
-Future<String> forgotPassword({required String email}) async {
+  Future<String> forgotPassword({required String email}) async {
     // CRITICAL: Ensure the baseUrl is using your working IP: http://192.168.1.4:3000/api
     final url = Uri.parse('$baseUrl/forgot-password');
 
     try {
       final body = jsonEncode({'email': email});
       _debugRequest('POST', url, body);
-      final response = await http.post(url, headers: _headers, body: body).timeout(requestTimeout);
+      final response = await http
+          .post(url, headers: _headers, body: body)
+          .timeout(requestTimeout);
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        return jsonResponse['message'] ?? 'Password reset link sent. Check your inbox.';
+        return jsonResponse['message'] ??
+            'Password reset link sent. Check your inbox.';
       } else {
         final errorBody = jsonDecode(response.body);
-        throw Exception(errorBody['message'] ?? 'Failed to initiate password reset.');
+        throw Exception(
+            errorBody['message'] ?? 'Failed to initiate password reset.');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
-}
+  }
 
   // --- LOGIN FUNCTION (The Verification Gatekeeper) ---
   Future<AuthResponse> loginUser({
@@ -167,7 +183,7 @@ Future<String> forgotPassword({required String email}) async {
     required String password,
   }) async {
     final url = Uri.parse('$baseUrl/login');
-    
+
     final body = jsonEncode({
       'email': email,
       'password': password,
@@ -175,7 +191,9 @@ Future<String> forgotPassword({required String email}) async {
 
     try {
       _debugRequest('POST', url, body);
-      final response = await http.post(url, headers: _headers, body: body).timeout(requestTimeout);
+      final response = await http
+          .post(url, headers: _headers, body: body)
+          .timeout(requestTimeout);
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
@@ -192,19 +210,22 @@ Future<String> forgotPassword({required String email}) async {
         throw Exception(errorBody['message'] ?? 'Authentication failed.');
       } else {
         final errorBody = jsonDecode(response.body);
-        throw Exception(errorBody['message'] ?? 'Login failed due to server error.');
+        throw Exception(
+            errorBody['message'] ?? 'Login failed due to server error.');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
   }
 
   // --- MACHINE MANAGEMENT FUNCTIONS ---
-  
+
   // Add new machine
   Future<MachineResponse> addMachine({
     required String machineId,
@@ -216,7 +237,7 @@ Future<String> forgotPassword({required String email}) async {
     }
 
     final url = Uri.parse('$baseUrl/machines');
-    
+
     final body = jsonEncode({
       'machineId': machineId,
       'machineModel': machineModel,
@@ -226,31 +247,37 @@ Future<String> forgotPassword({required String email}) async {
     try {
       final headers = _getAuthHeaders();
       _debugRequest('POST', url, body, headers);
-      final response = await http.post(url, headers: headers, body: body).timeout(requestTimeout);
+      final response = await http
+          .post(url, headers: headers, body: body)
+          .timeout(requestTimeout);
 
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
-      
+
       if (response.statusCode == 201) {
         final jsonResponse = jsonDecode(response.body);
         return MachineResponse.fromJson(jsonResponse);
       } else if (response.statusCode == 400) {
         // Bad request - validation errors
         final errorBody = jsonDecode(response.body);
-        throw Exception('Validation error: ${errorBody['message'] ?? 'Invalid machine data'}');
+        throw Exception(
+            'Validation error: ${errorBody['message'] ?? 'Invalid machine data'}');
       } else if (response.statusCode == 401) {
         // Unauthorized
         throw Exception('Authentication failed. Please log in again.');
       } else if (response.statusCode == 403) {
         // Forbidden
-        throw Exception('Access denied. You may not have permission to add machines.');
+        throw Exception(
+            'Access denied. You may not have permission to add machines.');
       } else if (response.statusCode == 409) {
         // Conflict - duplicate entry
-        throw Exception('Machine with this ID already exists. Please use a different machine ID.');
+        throw Exception(
+            'Machine with this ID already exists. Please use a different machine ID.');
       } else if (response.statusCode == 500) {
         // Server error - provide more helpful message
         final errorBody = jsonDecode(response.body);
-        throw Exception('Server error: ${errorBody['message'] ?? 'Unknown server error'}. Please check server logs or contact administrator.');
+        throw Exception(
+            'Server error: ${errorBody['message'] ?? 'Unknown server error'}. Please check server logs or contact administrator.');
       } else {
         // Other errors
         String errorMessage;
@@ -263,9 +290,11 @@ Future<String> forgotPassword({required String email}) async {
         throw Exception('HTTP ${response.statusCode}: $errorMessage');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -282,14 +311,15 @@ Future<String> forgotPassword({required String email}) async {
     try {
       final headers = _getAuthHeaders();
       _debugRequest('GET', url, null, headers);
-      final response = await http.get(url, headers: headers).timeout(requestTimeout);
-      
+      final response =
+          await http.get(url, headers: headers).timeout(requestTimeout);
+
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
-      
+
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        
+
         // Handle different response formats
         List<dynamic> machinesJson;
         if (jsonResponse is List) {
@@ -299,12 +329,13 @@ Future<String> forgotPassword({required String email}) async {
         } else {
           throw Exception('Unexpected response format');
         }
-        
+
         return machinesJson.map((json) => Machine.fromJson(json)).toList();
       } else if (response.statusCode == 401) {
         throw Exception('Authentication failed. Please log in again.');
       } else if (response.statusCode == 403) {
-        throw Exception('Access denied. You may not have permission to view machines.');
+        throw Exception(
+            'Access denied. You may not have permission to view machines.');
       } else {
         String errorMessage;
         try {
@@ -316,9 +347,11 @@ Future<String> forgotPassword({required String email}) async {
         throw Exception('HTTP ${response.statusCode}: $errorMessage');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -331,7 +364,8 @@ Future<String> forgotPassword({required String email}) async {
     try {
       final headers = _getAuthHeaders();
       _debugRequest('GET', url, null, headers);
-      final response = await http.get(url, headers: headers).timeout(requestTimeout);
+      final response =
+          await http.get(url, headers: headers).timeout(requestTimeout);
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
@@ -343,7 +377,8 @@ Future<String> forgotPassword({required String email}) async {
         } else if (jsonResponse['users'] != null) {
           usersJson = jsonResponse['users'];
         } else {
-          throw Exception('Unexpected response format when fetching technicians');
+          throw Exception(
+              'Unexpected response format when fetching technicians');
         }
 
         return usersJson.map((u) => User.fromJson(u)).toList();
@@ -360,9 +395,11 @@ Future<String> forgotPassword({required String email}) async {
         throw Exception('HTTP ${response.statusCode}: $errorMessage');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -379,11 +416,12 @@ Future<String> forgotPassword({required String email}) async {
     try {
       final headers = _getAuthHeaders();
       _debugRequest('GET', url, null, headers);
-      final response = await http.get(url, headers: headers).timeout(requestTimeout);
-      
+      final response =
+          await http.get(url, headers: headers).timeout(requestTimeout);
+
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
-      
+
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         return Machine.fromJson(jsonResponse);
@@ -392,21 +430,25 @@ Future<String> forgotPassword({required String email}) async {
       } else if (response.statusCode == 401) {
         throw Exception('Authentication failed. Please log in again.');
       } else if (response.statusCode == 403) {
-        throw Exception('Access denied. You may not have permission to view this machine.');
+        throw Exception(
+            'Access denied. You may not have permission to view this machine.');
       } else {
         String errorMessage;
         try {
           final errorBody = jsonDecode(response.body);
-          errorMessage = errorBody['message'] ?? 'Failed to fetch machine details.';
+          errorMessage =
+              errorBody['message'] ?? 'Failed to fetch machine details.';
         } catch (e) {
           errorMessage = 'Server returned: ${response.body}';
         }
         throw Exception('HTTP ${response.statusCode}: $errorMessage');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -423,32 +465,37 @@ Future<String> forgotPassword({required String email}) async {
     try {
       final headers = _getAuthHeaders();
       _debugRequest('GET', url, null, headers);
-      final response = await http.get(url, headers: headers).timeout(requestTimeout);
-      
+      final response =
+          await http.get(url, headers: headers).timeout(requestTimeout);
+
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
-      
+
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         return User.fromJson(jsonResponse['user']);
       } else if (response.statusCode == 401) {
-        throw Exception('Authentication failed or account not verified. Please log in again.');
+        throw Exception(
+            'Authentication failed or account not verified. Please log in again.');
       } else if (response.statusCode == 404) {
         throw Exception('User not found.');
       } else {
         String errorMessage;
         try {
           final errorBody = jsonDecode(response.body);
-          errorMessage = errorBody['message'] ?? 'Failed to fetch personal information.';
+          errorMessage =
+              errorBody['message'] ?? 'Failed to fetch personal information.';
         } catch (e) {
           errorMessage = 'Server returned: ${response.body}';
         }
         throw Exception('HTTP ${response.statusCode}: $errorMessage');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -465,7 +512,7 @@ Future<String> forgotPassword({required String email}) async {
     }
 
     final url = Uri.parse('$baseUrl/change-password');
-    
+
     final body = jsonEncode({
       'currentPassword': currentPassword,
       'newPassword': newPassword,
@@ -475,11 +522,13 @@ Future<String> forgotPassword({required String email}) async {
     try {
       final headers = _getAuthHeaders();
       _debugRequest('POST', url, body, headers);
-      final response = await http.post(url, headers: headers, body: body).timeout(requestTimeout);
-      
+      final response = await http
+          .post(url, headers: headers, body: body)
+          .timeout(requestTimeout);
+
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
-      
+
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         return jsonResponse['message'] ?? 'Password changed successfully.';
@@ -487,7 +536,8 @@ Future<String> forgotPassword({required String email}) async {
         final errorBody = jsonDecode(response.body);
         throw Exception(errorBody['message'] ?? 'Invalid password data.');
       } else if (response.statusCode == 401) {
-        throw Exception('Authentication failed or account not verified. Please log in again.');
+        throw Exception(
+            'Authentication failed or account not verified. Please log in again.');
       } else if (response.statusCode == 404) {
         throw Exception('User not found.');
       } else {
@@ -501,9 +551,11 @@ Future<String> forgotPassword({required String email}) async {
         throw Exception('HTTP ${response.statusCode}: $errorMessage');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -520,11 +572,12 @@ Future<String> forgotPassword({required String email}) async {
     try {
       final headers = _getAuthHeaders();
       _debugRequest('GET', url, null, headers);
-      final response = await http.get(url, headers: headers).timeout(requestTimeout);
-      
+      final response =
+          await http.get(url, headers: headers).timeout(requestTimeout);
+
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
-      
+
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         // Clear the stored auth token after successful logout
@@ -545,11 +598,13 @@ Future<String> forgotPassword({required String email}) async {
     } on TimeoutException {
       // Clear token even on timeout
       clearAuthToken();
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
       // Clear token even on network error
       clearAuthToken();
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       // Clear token on any error to ensure user is logged out locally
       clearAuthToken();
@@ -576,10 +631,11 @@ Future<String> forgotPassword({required String email}) async {
     final failureId = 'FAIL-${DateTime.now().millisecondsSinceEpoch}';
     // Map severity to requested capitalized SeverityLevel
     final severityLevel = {
-      'low': 'Low',
-      'medium': 'Medium',
-      'critical': 'Critical',
-    }[severity] ?? severity;
+          'low': 'Low',
+          'medium': 'Medium',
+          'critical': 'Critical',
+        }[severity] ??
+        severity;
 
     // Build payload to match backend expectation exactly
     final payload = {
@@ -597,7 +653,9 @@ Future<String> forgotPassword({required String email}) async {
     try {
       final headers = _getAuthHeaders();
       _debugRequest('POST', url, body, headers);
-      final response = await http.post(url, headers: headers, body: body).timeout(requestTimeout);
+      final response = await http
+          .post(url, headers: headers, body: body)
+          .timeout(requestTimeout);
 
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
@@ -624,9 +682,11 @@ Future<String> forgotPassword({required String email}) async {
         throw Exception('HTTP ${response.statusCode}: $errorMessage');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -640,11 +700,14 @@ Future<String> forgotPassword({required String email}) async {
     try {
       final headers = _getAuthHeaders();
       _debugRequest('GET', url, null, headers);
-      final response = await http.get(url, headers: headers).timeout(requestTimeout);
+      final response =
+          await http.get(url, headers: headers).timeout(requestTimeout);
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        final List<dynamic> list = jsonResponse is List ? jsonResponse : (jsonResponse['failures'] ?? []);
+        final List<dynamic> list = jsonResponse is List
+            ? jsonResponse
+            : (jsonResponse['failures'] ?? []);
         return list.map((e) => Failure.fromJson(e)).toList();
       } else {
         String errorMessage;
@@ -657,9 +720,11 @@ Future<String> forgotPassword({required String email}) async {
         throw Exception('HTTP ${response.statusCode}: $errorMessage');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -671,26 +736,32 @@ Future<String> forgotPassword({required String email}) async {
     try {
       final headers = _getAuthHeaders();
       _debugRequest('GET', url, null, headers);
-      final response = await http.get(url, headers: headers).timeout(requestTimeout);
+      final response =
+          await http.get(url, headers: headers).timeout(requestTimeout);
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        final List<dynamic> list = jsonResponse is List ? jsonResponse : (jsonResponse['failures'] ?? []);
+        final List<dynamic> list = jsonResponse is List
+            ? jsonResponse
+            : (jsonResponse['failures'] ?? []);
         return list.map((e) => Failure.fromJson(e)).toList();
       } else {
         String errorMessage;
         try {
           final errorBody = jsonDecode(response.body);
-          errorMessage = errorBody['message'] ?? 'Failed to fetch failures by reporter.';
+          errorMessage =
+              errorBody['message'] ?? 'Failed to fetch failures by reporter.';
         } catch (_) {
           errorMessage = 'Server returned: ${response.body}';
         }
         throw Exception('HTTP ${response.statusCode}: $errorMessage');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -706,11 +777,16 @@ Future<String> forgotPassword({required String email}) async {
     try {
       final headers = _getAuthHeaders();
       _debugRequest('PATCH', url, body, headers);
-      final response = await http.patch(url, headers: headers, body: body).timeout(requestTimeout);
+      final response = await http
+          .patch(url, headers: headers, body: body)
+          .timeout(requestTimeout);
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        final failureJson = jsonResponse is Map && jsonResponse['failure'] != null ? jsonResponse['failure'] : jsonResponse;
+        final failureJson =
+            jsonResponse is Map && jsonResponse['failure'] != null
+                ? jsonResponse['failure']
+                : jsonResponse;
         return Failure.fromJson(failureJson);
       } else if (response.statusCode == 404) {
         throw Exception('Failure not found');
@@ -718,16 +794,19 @@ Future<String> forgotPassword({required String email}) async {
         String errorMessage;
         try {
           final errorBody = jsonDecode(response.body);
-          errorMessage = errorBody['message'] ?? 'Failed to update failure status.';
+          errorMessage =
+              errorBody['message'] ?? 'Failed to update failure status.';
         } catch (_) {
           errorMessage = 'Server returned: ${response.body}';
         }
         throw Exception('HTTP ${response.statusCode}: $errorMessage');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -739,26 +818,32 @@ Future<String> forgotPassword({required String email}) async {
     try {
       final headers = _getAuthHeaders();
       _debugRequest('GET', url, null, headers);
-      final response = await http.get(url, headers: headers).timeout(requestTimeout);
+      final response =
+          await http.get(url, headers: headers).timeout(requestTimeout);
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        final List<dynamic> list = jsonResponse is List ? jsonResponse : (jsonResponse['failures'] ?? []);
+        final List<dynamic> list = jsonResponse is List
+            ? jsonResponse
+            : (jsonResponse['failures'] ?? []);
         return list.map((e) => Failure.fromJson(e)).toList();
       } else {
         String errorMessage;
         try {
           final errorBody = jsonDecode(response.body);
-          errorMessage = errorBody['message'] ?? 'Failed to fetch critical failures.';
+          errorMessage =
+              errorBody['message'] ?? 'Failed to fetch critical failures.';
         } catch (_) {
           errorMessage = 'Server returned: ${response.body}';
         }
         throw Exception('HTTP ${response.statusCode}: $errorMessage');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -770,26 +855,32 @@ Future<String> forgotPassword({required String email}) async {
     try {
       final headers = _getAuthHeaders();
       _debugRequest('GET', url, null, headers);
-      final response = await http.get(url, headers: headers).timeout(requestTimeout);
+      final response =
+          await http.get(url, headers: headers).timeout(requestTimeout);
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        final List<dynamic> list = jsonResponse is List ? jsonResponse : (jsonResponse['failures'] ?? []);
+        final List<dynamic> list = jsonResponse is List
+            ? jsonResponse
+            : (jsonResponse['failures'] ?? []);
         return list.map((e) => Failure.fromJson(e)).toList();
       } else {
         String errorMessage;
         try {
           final errorBody = jsonDecode(response.body);
-          errorMessage = errorBody['message'] ?? 'Failed to fetch assigned failures.';
+          errorMessage =
+              errorBody['message'] ?? 'Failed to fetch assigned failures.';
         } catch (_) {
           errorMessage = 'Server returned: ${response.body}';
         }
         throw Exception('HTTP ${response.statusCode}: $errorMessage');
       }
     } on TimeoutException {
-      throw Exception('Request timed out. Please check your network and try again.');
+      throw Exception(
+          'Request timed out. Please check your network and try again.');
     } on SocketException {
-      throw Exception('Network error. Could not reach server. Is the API running and reachable?');
+      throw Exception(
+          'Network error. Could not reach server. Is the API running and reachable?');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
