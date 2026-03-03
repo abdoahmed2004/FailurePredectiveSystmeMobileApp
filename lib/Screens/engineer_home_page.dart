@@ -280,69 +280,116 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
   }
 
   // ── Orange banner card ──────────────────────────────────────────────────────
+  // ── Premium Banner Card ───────────────────────────────────────────────────
   Widget _buildBannerCard() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      height: 150,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFC97A30), Color(0xFFE8A84C)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.25),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
+      // Margin adjusted to allow the image to overflow the top
+      margin: const EdgeInsets.only(left: 16, right: 16, top: 40, bottom: 16),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Positioned(
-            right: -10,
-            top: -10,
-            child: Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: context.cs.surface.withOpacity(0.08),
+          // ── Background Card ──────────────────────────────────────────────
+          Container(
+            height: 152,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFFF7F0), Color(0xFFFFCC99)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFC97A30).withValues(alpha: 0.15),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Stack(
+                children: [
+                  // Decorative diagonal bands for a premium look
+                  Positioned(
+                    right: -20,
+                    top: -40,
+                    child: Transform.rotate(
+                      angle: -0.4,
+                      child: Container(
+                        width: 140,
+                        height: 300,
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 60,
+                    top: -60,
+                    child: Transform.rotate(
+                      angle: -0.4,
+                      child: Container(
+                        width: 60,
+                        height: 300,
+                        color: Colors.white.withValues(alpha: 0.2),
+                      ),
+                    ),
+                  ),
+                  // A decorative circle
+                  Positioned(
+                    right: -20,
+                    top: -20,
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFD96B27).withValues(alpha: 0.08),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
+
+          // ── Overlapping Image ────────────────────────────────────────────
           Positioned(
             left: 0,
             bottom: 0,
             child: ClipRRect(
               borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                topLeft: Radius.circular(20),
+                bottomLeft: Radius.circular(24),
               ),
               child: Image.asset(
                 'assets/images/Engineer icon.png',
-                width: 130,
-                height: 150,
+                width: 150,
+                height: 195, // taller than the card height
                 fit: BoxFit.cover,
                 alignment: Alignment.topCenter,
-                errorBuilder: (_, __, ___) => Container(
-                  width: 130,
-                  height: 150,
-                  color: Colors.transparent,
-                  child: const Icon(Icons.engineering,
-                      color: Colors.white54, size: 60),
+                errorBuilder: (_, __, ___) => SizedBox(
+                  width: 140,
+                  height: 195,
+                  child: const Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: 20),
+                      child:
+                          Icon(Icons.engineering, color: Colors.grey, size: 80),
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
+
+          // ── Text Content ─────────────────────────────────────────────────
           Positioned(
-            right: 14,
+            right: 16,
             top: 0,
             bottom: 0,
-            left: 120,
+            left: 165, // updated to move text further right and clear the image
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,9 +397,9 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
                 Text(
                   'Your Machine\nOur Priority !',
                   style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    fontSize: 18, // slightly bigger, bold
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFFD96B27),
                     height: 1.25,
                   ),
                 ),
@@ -361,7 +408,8 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
                   'start now and take better\ncare of your business',
                   style: GoogleFonts.poppins(
                     fontSize: 11,
-                    color: Colors.white70,
+                    color: const Color(0xFFD96B27).withValues(alpha: 0.75),
+                    fontWeight: FontWeight.w500,
                     height: 1.4,
                   ),
                 ),
