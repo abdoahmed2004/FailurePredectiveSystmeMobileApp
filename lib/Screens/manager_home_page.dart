@@ -47,8 +47,8 @@ class _ManagerHomePageState extends State<ManagerHomePage> {
   Widget _buildBottomNav() {
     final items = [
       {'icon': 'assets/images/home.png', 'label': 'Home'},
-      {'icon': 'assets/images/menu - wallet.png', 'label': 'Jobs'},
-      {'icon': 'assets/images/circleicon.png', 'label': 'Schedule'},
+      {'icon': 'assets/images/chatai.png', 'label': 'Chatbot'},
+      {'icon': 'assets/images/circleicon.png', 'label': 'Reports'},
       {'icon': 'assets/images/profileicon.png', 'label': 'Profile'},
     ];
 
@@ -569,35 +569,6 @@ class _MgrOverviewTab extends StatelessWidget {
     return const Color(0xFF1A1A2E);
   }
 
-  // Active jobs = resolved failures this month
-  int get _resolvedThisMonth {
-    final now = DateTime.now();
-    return failures
-        .where((f) =>
-            f.status.toLowerCase() == 'fixed' &&
-            f.createdAt != null &&
-            f.createdAt!.month == now.month &&
-            f.createdAt!.year == now.year)
-        .length;
-  }
-
-  // Monthly chart data (resolved failures per month, last 7 months)
-  List<double> get _monthlyResolved {
-    final now = DateTime.now();
-    return List.generate(7, (i) {
-      final month = ((now.month - 6 + i - 1) % 12) + 1;
-      final year = now.year - (now.month - 6 + i <= 0 ? 1 : 0);
-      return failures
-          .where((f) =>
-              f.status.toLowerCase() == 'fixed' &&
-              f.createdAt != null &&
-              f.createdAt!.month == month &&
-              f.createdAt!.year == year)
-          .length
-          .toDouble();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     if (loadingMachines) {
@@ -710,180 +681,7 @@ class _MgrOverviewTab extends StatelessWidget {
                 .map((m) => _MachineChip(machine: m, dotColor: _dotColor(m)))
                 .toList(),
           ),
-        const SizedBox(height: 24),
-
-        // ── Active jobs / sales metric + chart ────────────────────────────
-        _ActiveJobsCard(
-          resolvedCount: _resolvedThisMonth,
-          chartData: _monthlyResolved.every((v) => v == 0)
-              ? [1.0, 3.0, 2.0, 4.0, 2.5, 3.5, 2.0] // sample fallback
-              : _monthlyResolved,
-          loading: loadingFailures,
-        ),
       ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  Active jobs card (matches "Active sales" in design)
-// ─────────────────────────────────────────────────────────────────────────────
-class _ActiveJobsCard extends StatefulWidget {
-  final int resolvedCount;
-  final List<double> chartData;
-  final bool loading;
-
-  const _ActiveJobsCard({
-    required this.resolvedCount,
-    required this.chartData,
-    required this.loading,
-  });
-
-  @override
-  State<_ActiveJobsCard> createState() => _ActiveJobsCardState();
-}
-
-class _ActiveJobsCardState extends State<_ActiveJobsCard> {
-  String _timeframe = 'Monthly';
-
-  @override
-  Widget build(BuildContext context) {
-    final displayVal = widget.resolvedCount > 0
-        ? '\$${(widget.resolvedCount * 0.127).toStringAsFixed(1)}k'
-        : '\$12.7k';
-
-    return Container(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-      decoration: BoxDecoration(
-        color: context.cs.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-              color: Color(0x0D000000), blurRadius: 12, offset: Offset(0, 4))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Active sales',
-                      style: GoogleFonts.poppins(
-                          fontSize: 11, color: context.cs.onSurfaceVariant)),
-                  SizedBox(height: 2),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        displayVal,
-                        style: GoogleFonts.poppins(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: context.cs.onSurface,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2ECC71).withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.arrow_upward_rounded,
-                                size: 10, color: Color(0xFF2ECC71)),
-                            Text('1.3%',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 10,
-                                    color: Color(0xFF2ECC71),
-                                    fontWeight: FontWeight.w600)),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: 4),
-                      Text('VS LAST YEAR',
-                          style: GoogleFonts.poppins(
-                              fontSize: 9, color: context.cs.onSurfaceVariant)),
-                    ],
-                  ),
-                ],
-              ),
-              Container(
-                height: 28,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  border: Border.all(color: context.cs.outline),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _timeframe,
-                    icon: Icon(Icons.keyboard_arrow_down,
-                        size: 14, color: context.cs.onSurfaceVariant),
-                    dropdownColor: context.cs.surface,
-                    style: GoogleFonts.poppins(
-                        fontSize: 11, color: context.cs.onSurfaceVariant),
-                    items: ['Weekly', 'Monthly', 'Yearly'].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() => _timeframe = val);
-                      }
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // Y-axis labels + chart
-          if (widget.loading)
-            const SizedBox(
-              height: 110,
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-            )
-          else
-            SizedBox(
-              height: 110,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Y-axis
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: ['4k', '3k', '2k', '1k', '0']
-                        .map((l) => Text(l,
-                            style: GoogleFonts.poppins(
-                                fontSize: 9,
-                                color: context.cs.onSurfaceVariant)))
-                        .toList(),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: CustomPaint(
-                      painter: _LineChartPainter(data: widget.chartData),
-                      size: Size.infinite,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          const SizedBox(height: 12),
-        ],
-      ),
     );
   }
 }
@@ -1216,7 +1014,7 @@ class _WeeklyCalendarTabState extends State<_WeeklyCalendarTab> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('fault Overview',
+                  Text('Performance Overview',
                       style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
