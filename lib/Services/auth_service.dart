@@ -21,9 +21,13 @@ String _resolveBaseUrl() {
       // Use Mac's local IP address so physical Android devices via USB/WiFi can connect
       return 'http://192.168.1.31:3000/api';
     }
+    if (Platform.isIOS) {
+      // iOS simulator shares the Mac's network — use localhost directly
+      return 'http://127.0.0.1:3000/api';
+    }
   } catch (_) {}
-  // Default for iOS simulator, desktop and others (also using local IP for consistency)
-  return 'http://192.168.1.31:3000/api';
+  // Default for desktop and others
+  return 'http://127.0.0.1:3000/api';
 }
 
 class AuthService {
