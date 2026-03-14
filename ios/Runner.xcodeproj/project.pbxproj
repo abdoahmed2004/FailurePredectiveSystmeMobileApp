@@ -284,7 +284,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" embed_and_thin";
+			shellScript = "if [[ \"$SDKROOT\" == *\"simulator\"* ]] || [[ \"$PLATFORM_NAME\" == *\"simulator\"* ]]; then\n  export EXPANDED_CODE_SIGN_IDENTITY=\"\"\n  export CODE_SIGNING_REQUIRED=NO\n  export CODE_SIGNING_ALLOWED=NO\nfi\n/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" embed_and_thin";
 		};
 		5AC011C806CE56BD260C333D /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -316,7 +316,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
+			shellScript = "if [[ \"$SDKROOT\" == *\"simulator\"* ]] || [[ \"$PLATFORM_NAME\" == *\"simulator\"* ]]; then\n  export EXPANDED_CODE_SIGN_IDENTITY=\"\"\n  export CODE_SIGNING_REQUIRED=NO\n  export CODE_SIGNING_ALLOWED=NO\nfi\n/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
 		};
 		9B14A7373B310FAD2670CD98 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
