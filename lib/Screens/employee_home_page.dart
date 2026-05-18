@@ -11,6 +11,7 @@ import '../Models/machine_model.dart';
 import '../Models/failure_model.dart';
 import '../Models/user_model.dart';
 import 'Profile/profile_screen.dart';
+import 'chatbot_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 class EmployeeHomePage extends StatefulWidget {
@@ -33,10 +34,7 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
           index: _bottomIndex,
           children: [
             _EmpMainContent(userName: widget.userName),
-            const Center(
-                child: _PlaceholderTab(
-                    icon: Icons.chat_bubble_outline_outlined,
-                    label: 'chatbot')),
+            const ChatbotPage(),
             const Center(
                 child: _PlaceholderTab(
                     icon: Icons.report_outlined, label: 'reports')),

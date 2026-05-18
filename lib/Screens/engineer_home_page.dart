@@ -8,6 +8,7 @@ import '../Models/user_model.dart';
 import '../Models/machine_model.dart';
 import '../Models/failure_model.dart';
 import 'Profile/profile_screen.dart';
+import 'chatbot_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  EngineerHomePage – root scaffold with bottom nav
@@ -32,9 +33,7 @@ class _EngineerHomePageState extends State<EngineerHomePage> {
           index: _bottomIndex,
           children: [
             _EngineerMainContent(userName: widget.userName),
-            const Center(
-                child: _PlaceholderTab(
-                    icon: Icons.smart_toy_outlined, label: 'Chatbot')),
+            const ChatbotPage(),
             const Center(
                 child: _PlaceholderTab(
                     icon: Icons.schedule_outlined, label: 'Reports')),
