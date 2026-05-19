@@ -6,6 +6,7 @@ import '../Services/auth_service.dart';
 import '../Models/machine_model.dart';
 import '../Models/failure_model.dart';
 import 'Profile/profile_screen.dart';
+import 'chatbot_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  ManagerHomePage – root scaffold for technician role
@@ -30,9 +31,7 @@ class _ManagerHomePageState extends State<ManagerHomePage> {
           index: _bottomIndex,
           children: [
             _ManagerMainContent(userName: widget.userName),
-            const Center(
-                child: _PlaceholderTab(
-                    icon: Icons.shopping_bag_outlined, label: 'Jobs')),
+            const ChatbotPage(),
             const Center(
                 child: _PlaceholderTab(
                     icon: Icons.schedule_outlined, label: 'Schedule')),

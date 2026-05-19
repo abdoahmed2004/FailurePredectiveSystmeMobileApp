@@ -3,6 +3,7 @@ import 'package:fpms_app/Screens/failures_page.dart';
 import 'package:fpms_app/Screens/overview_page.dart';
 import 'package:fpms_app/Screens/weekly_page.dart';
 import 'package:fpms_app/Screens/Profile/profile_screen.dart'; // Import Profile Screen
+import 'package:fpms_app/Screens/chatbot_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fpms_app/core/constants/app_colors.dart'; // Import colors for the button
 
@@ -53,13 +54,8 @@ class _HomePageState extends State<HomePage> {
                       fontSize: 20,
                     ))),
 
-            // Index 2: Chatbot (Placeholder)
-            Center(
-                child: Text("Chatbot",
-                    style: GoogleFonts.poppins(
-                      color: isDarkMode ? Colors.white : Colors.black,
-                      fontSize: 20,
-                    ))),
+            // Index 2: Chatbot
+            const ChatbotPage(),
 
             // Index 3: Profile Screen
             const ProfileScreen(),
