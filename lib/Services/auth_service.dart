@@ -18,8 +18,9 @@ String _resolveBaseUrl() {
   if (_envBaseUrl.isNotEmpty) return _envBaseUrl;
   try {
     if (Platform.isAndroid) {
-      // Use Mac's local IP address so physical Android devices via USB/WiFi can connect
-      return 'http://192.168.1.31:3000/api';
+      // Use Mac's current local IP address so physical Android devices via USB/WiFi can connect
+      // Note: If you are using Android Emulator, you can also use 'http://10.0.2.2:3000/api'
+      return 'http://192.168.1.11:3000/api';
     }
     if (Platform.isIOS) {
       // iOS simulator shares the Mac's network — use localhost directly
