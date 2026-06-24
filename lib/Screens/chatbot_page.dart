@@ -18,7 +18,8 @@ class _ChatbotPageState extends State<ChatbotPage> {
   final List<_UiChatMessage> _messages = [
     const _UiChatMessage(
       isUser: false,
-      text: 'Hi, I am your FPMS assistant. Ask me about machine failures, maintenance checks, or troubleshooting steps.',
+      text:
+          'Hi, I am your FPMS assistant. Ask me about machine failures, maintenance checks, or troubleshooting steps.',
     ),
   ];
 
@@ -89,109 +90,115 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
   @override
   Widget build(BuildContext context) {
-    final background = const Color(0xFF0F1115);
-    final inputBg = const Color(0xFF1D222B);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final background = isDarkMode ? const Color(0xFF0F1115) : Colors.white;
+    final inputBg = isDarkMode ? const Color(0xFF1D222B) : Colors.white;
+    final textColor = isDarkMode ? Colors.white : Colors.black87;
 
-    return Container(
-      color: background,
-      child: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return _ChatBubble(message: message);
-              },
-            ),
-          ),
-          if (_isSending)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 6),
-              child: SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
+    return Scaffold(
+      backgroundColor: background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                itemCount: _messages.length,
+                itemBuilder: (context, index) {
+                  final message = _messages[index];
+                  return _ChatBubble(message: message);
+                },
               ),
             ),
-          Container(
-            color: background,
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _inputController,
-                    enabled: !_isSending,
-                    minLines: 1,
-                    maxLines: 4,
-                    style: GoogleFonts.poppins(color: Colors.white),
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _sendMessage(),
-                    decoration: InputDecoration(
-                      hintText: 'Ask FPMS assistant...',
-                      hintStyle: GoogleFonts.poppins(color: Colors.white60),
-                      filled: true,
-                      fillColor: inputBg,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
+            if (_isSending)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 6),
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Color(0xFFC00000)),
+                ),
+              ),
+            Container(
+              color: background,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: inputBg,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(
+                      color: isDarkMode ? Colors.white24 : Colors.grey[300]!),
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.add_circle,
+                          color: Color(0xFFC00000)),
+                      onPressed: () {},
+                    ),
+                    Expanded(
+                      child: TextField(
+                        controller: _inputController,
+                        enabled: !_isSending,
+                        minLines: 1,
+                        maxLines: 4,
+                        style: GoogleFonts.poppins(color: textColor),
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: (_) => _sendMessage(),
+                        decoration: const InputDecoration(
+                          hintText: '',
+                          border: InputBorder.none,
+                          contentPadding:
+                              EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                        ),
                       ),
                     ),
-                  ),
+                    IconButton(
+                      onPressed: _isSending ? null : _sendMessage,
+                      icon: const Icon(Icons.send, color: Color(0xFFC00000)),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: _isSending ? null : _sendMessage,
-                  icon: const Icon(Icons.send_rounded, color: Colors.orange),
-                  style: IconButton.styleFrom(
-                    backgroundColor: inputBg,
-                    minimumSize: const Size(46, 46),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF2E1F5E), Color(0xFF4A3080)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const CircleAvatar(
-            radius: 18,
-            backgroundColor: Colors.white24,
-            child: Icon(Icons.smart_toy_outlined, color: Colors.white),
+          IconButton(
+            icon: Icon(Icons.keyboard_return,
+                color: isDarkMode ? Colors.white : Colors.black),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+            },
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'FPMS Chatbot',
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
+          Image.asset(
+            'assets/images/logo.png',
+            height: 45,
+            errorBuilder: (context, error, stackTrace) => const Icon(
+              Icons.engineering,
+              color: Colors.orange,
+              size: 40,
             ),
+          ),
+          IconButton(
+            icon: Icon(Icons.sort,
+                color: isDarkMode ? Colors.white : Colors.black),
+            onPressed: () {},
           ),
         ],
       ),
@@ -205,25 +212,57 @@ class _ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final align = message.isUser ? Alignment.centerRight : Alignment.centerLeft;
-    final bubbleColor = message.isUser
-        ? const Color(0xFFFF9800)
-        : (message.isError ? const Color(0xFFB00020) : const Color(0xFF222A35));
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Align(
-      alignment: align,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 320),
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: bubbleColor,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Text(
-          message.text,
-          style: GoogleFonts.poppins(color: Colors.white, height: 1.35),
-        ),
+    final bubbleColor = message.isUser
+        ? const Color(0xFF9CA3AF) // Grey for user
+        : (message.isError
+            ? const Color(0xFFB00020)
+            : const Color(0xFF232D3F)); // Dark navy for bot
+
+    final textColor = message.isUser ? Colors.black87 : Colors.white;
+
+    final borderRadius = BorderRadius.only(
+      topLeft: const Radius.circular(20),
+      topRight: const Radius.circular(20),
+      bottomLeft: Radius.circular(message.isUser ? 20 : 0),
+      bottomRight: Radius.circular(message.isUser ? 0 : 20),
+    );
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment:
+            message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!message.isUser)
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0, top: 4),
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor:
+                    isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                child: const Icon(Icons.smart_toy,
+                    size: 20, color: Color(0xFF232D3F)),
+              ),
+            ),
+          Flexible(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 280),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: bubbleColor,
+                borderRadius: borderRadius,
+              ),
+              child: Text(
+                message.text,
+                style: GoogleFonts.poppins(
+                    color: textColor, height: 1.35, fontSize: 14),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

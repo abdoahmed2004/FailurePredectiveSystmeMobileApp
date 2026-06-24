@@ -3,8 +3,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-const String _openRouterApiKey =
-  String.fromEnvironment('OPENROUTER_API_KEY', defaultValue: '');
+import '../api_keys.dart';
+
 const String _aiModel =
     String.fromEnvironment('AI_MODEL', defaultValue: 'google/gemini-2.5-flash');
 const Duration _timeout = Duration(seconds: 30);
@@ -18,9 +18,9 @@ class GeminiChatService {
     required String userPrompt,
     List<GeminiChatTurn> history = const [],
   }) async {
-    if (_openRouterApiKey.isEmpty) {
+    if (openRouterApiKey.isEmpty) {
       throw Exception(
-        'OpenRouter API key is missing. Run with --dart-define=OPENROUTER_API_KEY=YOUR_KEY',
+        'OpenRouter API key is missing. Please check your api_keys.dart file.',
       );
     }
 
@@ -51,7 +51,7 @@ class GeminiChatService {
             url,
             headers: {
               'Content-Type': 'application/json; charset=UTF-8',
-              'Authorization': 'Bearer $_openRouterApiKey',
+              'Authorization': 'Bearer $openRouterApiKey',
               'HTTP-Referer': 'https://machinify.app', // Optional but recommended by OpenRouter
               'X-Title': 'Machinify FPMS', // Optional but recommended
             },
