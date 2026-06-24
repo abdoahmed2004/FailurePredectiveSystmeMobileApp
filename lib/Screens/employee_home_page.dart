@@ -30,6 +30,7 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
     return Scaffold(
       backgroundColor: context.cs.surface,
       body: SafeArea(
+        top: false,
         child: IndexedStack(
           index: _bottomIndex,
           children: [
@@ -194,7 +195,7 @@ class _EmpMainContentState extends State<_EmpMainContent> {
       ),
       child: Column(children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(18, 10, 18, 12),
+          padding: EdgeInsets.fromLTRB(18, MediaQuery.of(context).padding.top + 10, 18, 12),
           child: Row(children: [
             Icon(Icons.grid_view_rounded, color: Colors.white70, size: 22),
             Expanded(
@@ -232,13 +233,13 @@ class _EmpMainContentState extends State<_EmpMainContent> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
               gradient: const LinearGradient(
-                colors: [Color(0xFFFFF7F0), Color(0xFFFFCC99)],
+                colors: [Color(0xFF5A44DA), Color(0xFF3726A6)], // Purple gradient
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFC97A30).withValues(alpha: 0.15),
+                  color: const Color(0xFF5A44DA).withValues(alpha: 0.15),
                   blurRadius: 16,
                   offset: const Offset(0, 8),
                 ),
@@ -257,7 +258,7 @@ class _EmpMainContentState extends State<_EmpMainContent> {
                       child: Container(
                         width: 140,
                         height: 300,
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: Colors.white.withValues(alpha: 0.1),
                       ),
                     ),
                   ),
@@ -269,7 +270,7 @@ class _EmpMainContentState extends State<_EmpMainContent> {
                       child: Container(
                         width: 60,
                         height: 300,
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: Colors.white.withValues(alpha: 0.05),
                       ),
                     ),
                   ),
@@ -282,7 +283,7 @@ class _EmpMainContentState extends State<_EmpMainContent> {
                       height: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFFD96B27).withValues(alpha: 0.08),
+                        color: Colors.white.withValues(alpha: 0.05),
                       ),
                     ),
                   ),
@@ -327,26 +328,36 @@ class _EmpMainContentState extends State<_EmpMainContent> {
             right: 16,
             top: 0,
             bottom: 0,
-            left: 165, // updated to move text further right and clear the image
+            left: 155, // updated to move text further right and clear the image
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Your Machine\nOur Priority !',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18, // slightly bigger, bold
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFFD96B27),
-                    height: 1.25,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Employee',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20, // slightly bigger, bold
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFFD5CCFF),
+                        height: 1.25,
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Color(0xFFD5CCFF),
+                      size: 24,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'start now and take better care of your business',
+                  'Oversee factory operations, monitor machine health, and guide your team.',
                   style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: const Color(0xFFD96B27).withValues(alpha: 0.75),
+                    fontSize: 10,
+                    color: const Color(0xFFB5A9FF),
                     fontWeight: FontWeight.w500,
                     height: 1.4,
                   ),

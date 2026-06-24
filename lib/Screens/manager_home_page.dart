@@ -27,6 +27,7 @@ class _ManagerHomePageState extends State<ManagerHomePage> {
     return Scaffold(
       backgroundColor: context.cs.surface,
       body: SafeArea(
+        top: false,
         child: IndexedStack(
           index: _bottomIndex,
           children: [
@@ -198,7 +199,7 @@ class _ManagerMainContentState extends State<_ManagerMainContent> {
       width: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF2E1F5E), Color(0xFF4A3080)],
+          colors: [Color(0xFF8B5A3C), Color(0xFFD08A5C)], // Brown/Orange for Manager
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -207,7 +208,7 @@ class _ManagerMainContentState extends State<_ManagerMainContent> {
         children: [
           // Top bar
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 10, 18, 12),
+            padding: EdgeInsets.fromLTRB(18, MediaQuery.of(context).padding.top + 10, 18, 12),
             child: Row(
               children: [
                 Icon(Icons.grid_view_rounded, color: Colors.white70, size: 22),
@@ -345,26 +346,36 @@ class _ManagerMainContentState extends State<_ManagerMainContent> {
             right: 16,
             top: 0,
             bottom: 0,
-            left: 165, // updated to move text further right and clear the image
+            left: 155, // updated to move text further right and clear the image
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Your Machine\nOur Priority !',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18, // slightly bigger, bold
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFFD96B27),
-                    height: 1.25,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Supervisor',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20, // slightly bigger, bold
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFFD96B27),
+                        height: 1.25,
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Color(0xFFD96B27),
+                      size: 24,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'start now and take better care of your business',
+                  'Handle assigned failures and keep machines running by coordinating with engineers.',
                   style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: const Color(0xFFD96B27).withValues(alpha: 0.75),
+                    fontSize: 10,
+                    color: const Color(0xFFD96B27).withValues(alpha: 0.85),
                     fontWeight: FontWeight.w500,
                     height: 1.4,
                   ),

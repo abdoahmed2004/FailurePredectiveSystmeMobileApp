@@ -3,11 +3,11 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-const String _geminiApiKey =
-  String.fromEnvironment('GEMINI_API_KEY', defaultValue: 'AIzaSyBS2_rejcKOKExFHc6e99ouH5Pe6g2DXXo');
-const String _geminiModel =
-    String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-2.0-flash');
-const Duration _geminiTimeout = Duration(seconds: 20);
+const String _openRouterApiKey =
+  String.fromEnvironment('OPENROUTER_API_KEY', defaultValue: '');
+const String _aiModel =
+    String.fromEnvironment('AI_MODEL', defaultValue: 'google/gemini-2.5-flash');
+const Duration _timeout = Duration(seconds: 30);
 
 class GeminiChatService {
   final http.Client _client;
@@ -18,94 +18,65 @@ class GeminiChatService {
     required String userPrompt,
     List<GeminiChatTurn> history = const [],
   }) async {
-    if (_geminiApiKey.isEmpty) {
+    if (_openRouterApiKey.isEmpty) {
       throw Exception(
-        'Gemini API key is missing. Run with --dart-define=GEMINI_API_KEY=YOUR_KEY',
+        'OpenRouter API key is missing. Run with --dart-define=OPENROUTER_API_KEY=YOUR_KEY',
       );
     }
 
-    final List<Map<String, dynamic>> contents = [
+    final List<Map<String, dynamic>> messages = [
+      {
+        'role': 'system',
+        'content': 'You are FPMS assistant for factory predictive maintenance. Keep answers clear, practical, and concise.'
+      },
       ...history.map((turn) => turn.toApiContent()),
       {
         'role': 'user',
-        'parts': [
-          {
-            'text':
-                'You are FPMS assistant for factory predictive maintenance. Keep answers clear, practical, and concise.\n\nUser question: $userPrompt'
-          }
-        ],
+        'content': userPrompt,
       },
     ];
 
     final body = jsonEncode({
-      'contents': contents,
-      'generationConfig': {
-        'temperature': 0.4,
-        'maxOutputTokens': 512,
-      },
+      'model': _aiModel,
+      'messages': messages,
+      'temperature': 0.4,
+      'max_tokens': 512,
     });
 
     try {
-      final modelsToTry = <String>{
-        _geminiModel,
-        'gemini-2.0-flash',
-        'gemini-2.0-flash-lite',
-        'gemini-1.5-flash-latest',
-        'gemini-1.5-pro-latest',
-      }.toList();
-      final versionsToTry = const ['v1', 'v1beta'];
+      final url = Uri.parse('https://openrouter.ai/api/v1/chat/completions');
 
-      String? lastRecoverableError;
-      for (final version in versionsToTry) {
-        for (final model in modelsToTry) {
-          final url = Uri.parse(
-            'https://generativelanguage.googleapis.com/$version/models/$model:generateContent?key=$_geminiApiKey',
-          );
+      final response = await _client
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json; charset=UTF-8',
+              'Authorization': 'Bearer $_openRouterApiKey',
+              'HTTP-Referer': 'https://machinify.app', // Optional but recommended by OpenRouter
+              'X-Title': 'Machinify FPMS', // Optional but recommended
+            },
+            body: body,
+          )
+          .timeout(_timeout);
 
-          final response = await _client
-              .post(
-                url,
-                headers: const {
-                  'Content-Type': 'application/json; charset=UTF-8',
-                },
-                body: body,
-              )
-              .timeout(_geminiTimeout);
-
-          if (response.statusCode == 200) {
-            return _extractTextFromResponse(response.body);
-          }
-
-          final message = _extractErrorMessage(response);
-          final normalized = message.toLowerCase();
-
-          if (response.statusCode == 429 ||
-              normalized.contains('quota') ||
-              normalized.contains('rate limit')) {
-            throw Exception(_buildQuotaMessage(message));
-          }
-
-          final recoverable = response.statusCode == 404 ||
-              normalized.contains('not found') ||
-              normalized.contains('not supported for generatecontent');
-
-          if (recoverable) {
-            lastRecoverableError = message;
-            continue;
-          }
-
-          throw Exception(message);
-        }
+      if (response.statusCode == 200) {
+        return _extractTextFromResponse(response.body);
       }
 
-      throw Exception(
-        lastRecoverableError ??
-            'No compatible Gemini model was found for this API key/project.',
-      );
+      final message = _extractErrorMessage(response);
+      final normalized = message.toLowerCase();
+
+      if (response.statusCode == 429 ||
+          normalized.contains('quota') ||
+          normalized.contains('rate limit')) {
+        throw Exception('API quota exceeded or rate limited. Please try again later.');
+      }
+
+      throw Exception(message);
     } on TimeoutException {
-      throw Exception('Gemini request timed out. Please try again.');
+      throw Exception('Request timed out. Please try again.');
     } on FormatException {
-      throw Exception('Could not parse Gemini response.');
+      throw Exception('Could not parse API response.');
     } catch (e) {
       rethrow;
     }
@@ -114,26 +85,22 @@ class GeminiChatService {
   String _extractTextFromResponse(String responseBody) {
     final Map<String, dynamic> data =
         jsonDecode(responseBody) as Map<String, dynamic>;
-    final List<dynamic>? candidates = data['candidates'] as List<dynamic>?;
-    if (candidates == null || candidates.isEmpty) {
-      throw Exception('Gemini returned an empty response.');
+    
+    final List<dynamic>? choices = data['choices'] as List<dynamic>?;
+    if (choices == null || choices.isEmpty) {
+      throw Exception('API returned an empty response.');
     }
 
-    final Map<String, dynamic>? content =
-        candidates.first['content'] as Map<String, dynamic>?;
-    final List<dynamic>? parts = content?['parts'] as List<dynamic>?;
-    if (parts == null || parts.isEmpty) {
-      throw Exception('Gemini returned no text parts.');
+    final Map<String, dynamic>? message =
+        choices.first['message'] as Map<String, dynamic>?;
+    
+    final String? text = message?['content']?.toString();
+    
+    if (text == null || text.trim().isEmpty) {
+      throw Exception('API returned a blank message.');
     }
-
-    final text = parts
-        .map((part) => (part as Map<String, dynamic>)['text']?.toString() ?? '')
-        .join('\n')
-        .trim();
-    if (text.isEmpty) {
-      throw Exception('Gemini returned a blank message.');
-    }
-    return text;
+    
+    return text.trim();
   }
 
   String _extractErrorMessage(http.Response response) {
@@ -146,17 +113,7 @@ class GeminiChatService {
         }
       }
     } catch (_) {}
-    return 'gemini request failed (${response.statusCode}).';
-  }
-
-  String _buildQuotaMessage(String apiMessage) {
-    final waitMatch = RegExp(r'please retry in\s+([0-9.]+)s', caseSensitive: false)
-        .firstMatch(apiMessage);
-    final waitSeconds = waitMatch?.group(1);
-    if (waitSeconds != null) {
-      return 'Gemini quota exceeded. Retry after about $waitSeconds seconds, or use another API key with available quota.';
-    }
-    return 'Gemini quota exceeded. Please check your Google AI plan/billing or switch to another API key.';
+    return 'API request failed (${response.statusCode}).';
   }
 }
 
@@ -168,10 +125,8 @@ class GeminiChatTurn {
 
   Map<String, dynamic> toApiContent() {
     return {
-      'role': isUser ? 'user' : 'model',
-      'parts': [
-        {'text': text}
-      ],
+      'role': isUser ? 'user' : 'assistant',
+      'content': text,
     };
   }
 }

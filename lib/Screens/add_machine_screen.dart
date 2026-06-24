@@ -113,12 +113,12 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
           // 1. Background Image with Theme-aware Effect
           Positioned.fill(
             child: Image.asset(
-              'assets/images/onboarding_2.png',
+              'assets/images/add_machine.png',
               fit: BoxFit.cover,
-              // Darken image in dark mode, lighten in light mode
+              // Darken image in dark mode, keep it mostly opaque in light mode for clarity
               color: isDarkMode
                   ? Colors.black.withOpacity(0.7)
-                  : Colors.white.withOpacity(0.2),
+                  : Colors.white.withOpacity(0.7),
               colorBlendMode: isDarkMode ? BlendMode.darken : BlendMode.dstATop,
             ),
           ),

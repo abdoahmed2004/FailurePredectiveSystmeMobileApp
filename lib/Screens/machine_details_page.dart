@@ -212,12 +212,48 @@ class _MachineDetailsPageState extends State<MachineDetailsPage> {
                           time: "Real-time",
                           value: "${_machine!.airTemperature!.toStringAsFixed(1)}°C",
                         ),
+                      if (_machine?.light != null)
+                        sensorTile(
+                          icon: Icons.lightbulb_outline,
+                          label: "Light",
+                          time: "Real-time",
+                          value: "${_machine!.light!.toStringAsFixed(1)} lux",
+                        ),
                       if (_machine?.processTemperature != null)
                         sensorTile(
                           icon: Icons.local_fire_department,
                           label: "Process Temperature",
                           time: "Real-time",
                           value: "${_machine!.processTemperature!.toStringAsFixed(1)}°C",
+                        ),
+
+                      if (_machine?.remainingCycles != null)
+                        sensorTile(
+                          icon: Icons.loop,
+                          label: "Remaining Cycles",
+                          time: "Prediction",
+                          value: "${_machine!.remainingCycles}",
+                        ),
+                      if (_machine?.daysToFailure != null)
+                        sensorTile(
+                          icon: Icons.calendar_today,
+                          label: "Days to Failure",
+                          time: "Prediction",
+                          value: "${_machine!.daysToFailure!.toStringAsFixed(1)} days",
+                        ),
+                      if (_machine?.failureProbability != null)
+                        sensorTile(
+                          icon: Icons.warning_amber,
+                          label: "Failure Probability",
+                          time: "Prediction",
+                          value: "${_machine!.failureProbability!.toStringAsFixed(0)}%",
+                        ),
+                      if (_machine?.predictionStatus != null)
+                        sensorTile(
+                          icon: Icons.analytics,
+                          label: "Prediction Status",
+                          time: "Prediction",
+                          value: _machine!.predictionStatus!,
                         ),
                     ],
                   ),

@@ -17,6 +17,18 @@ class Machine {
   final double? torque;
   final double? airTemperature;
   final double? processTemperature;
+  
+  // Prediction fields
+  final int? remainingCycles;
+  final double? daysToFailure;
+  final double? failureProbability;
+  final String? predictionStatus;
+  final String? rootCause;
+
+  // Extra sensor fields
+  final double? light;
+  
+  final String? rawJsonString;
 
   Machine({
     this.id,
@@ -33,26 +45,62 @@ class Machine {
     this.torque,
     this.airTemperature,
     this.processTemperature,
+    this.remainingCycles,
+    this.daysToFailure,
+    this.failureProbability,
+    this.predictionStatus,
+    this.rootCause,
+    this.light,
+    this.rawJsonString,
   });
 
+  static double? _parseDouble(Map<String, dynamic> json, List<String> possibleKeys) {
+    for (String key in possibleKeys) {
+      if (json[key] != null) {
+        return double.tryParse(json[key].toString());
+      }
+    }
+    // Fallback: case-insensitive match
+    final lowerCaseMap = json.map((k, v) => MapEntry(k.toLowerCase(), v));
+    for (String key in possibleKeys) {
+      final lowerKey = key.toLowerCase();
+      if (lowerCaseMap[lowerKey] != null) {
+        return double.tryParse(lowerCaseMap[lowerKey].toString());
+      }
+    }
+    return null;
+  }
+
   factory Machine.fromJson(Map<String, dynamic> json) {
+    final sensorData = json['sensor_data'] as Map<String, dynamic>? ?? {};
+    final predictionData = json['prediction'] as Map<String, dynamic>? ?? {};
+
+    double? parseSensor(List<String> keys) {
+      return _parseDouble(sensorData, keys) ?? _parseDouble(json, keys);
+    }
+
     return Machine(
       id: json['_id'],
-      machineId: json['machineId'],
-      machineModel: json['machineModel'],
-      machineType: json[
-          'MachineType'], // Note: Backend uses 'MachineType' with capital M
-      status: int.tryParse(json['MachineStatus']?.toString() ?? '0') ??
-          0, // Parse MachineStatus as int
-      temperature: json['temperature']?.toDouble(),
-      pressure: json['pressure']?.toDouble(),
-      humidity: json['humidity']?.toDouble(),
-      vibration: json['vibration']?.toDouble(),
-      toolWear: json['tool_wear']?.toDouble(),
-      rotationalSpeed: json['rotational_speed']?.toDouble(),
-      torque: json['torque']?.toDouble(),
-      airTemperature: json['air_temperature']?.toDouble(),
-      processTemperature: json['process_temperature']?.toDouble(),
+      machineId: json['machineId'] ?? json['MachineId'] ?? 'Unknown',
+      machineModel: json['machineModel'] ?? json['MachineModel'] ?? 'Unknown',
+      machineType: json['MachineType'] ?? json['machineType'] ?? 'Unknown',
+      status: int.tryParse(json['MachineStatus']?.toString() ?? json['machineStatus']?.toString() ?? '0') ?? 0,
+      temperature: parseSensor(['temp_dht', 'temperature', 'Temperature']),
+      pressure: parseSensor(['pressure', 'Pressure']),
+      humidity: parseSensor(['hum_dht', 'humidity', 'Humidity']),
+      vibration: parseSensor(['vib_rms', 'vibration', 'Vibration']),
+      toolWear: parseSensor(['tool_wear', 'toolWear', 'ToolWear', 'Tool_wear']),
+      rotationalSpeed: parseSensor(['rotational_speed', 'rotationalSpeed', 'RotationalSpeed']),
+      torque: parseSensor(['torque', 'Torque']),
+      airTemperature: parseSensor(['air_temperature', 'airTemperature', 'AirTemperature']),
+      processTemperature: parseSensor(['temp_ds', 'process_temperature', 'processTemperature', 'ProcessTemperature']),
+      light: parseSensor(['light', 'Light']),
+      remainingCycles: int.tryParse(predictionData['remainingCycles']?.toString() ?? ''),
+      daysToFailure: double.tryParse(predictionData['daysToFailure']?.toString() ?? ''),
+      failureProbability: double.tryParse(predictionData['failureProbability']?.toString() ?? ''),
+      predictionStatus: predictionData['predictionStatus']?.toString(),
+      rootCause: predictionData['rootCause']?.toString(),
+      rawJsonString: json.toString(),
     );
   }
 

@@ -29,6 +29,7 @@ class _EngineerHomePageState extends State<EngineerHomePage> {
     return Scaffold(
       backgroundColor: context.cs.surface,
       body: SafeArea(
+        top: false,
         child: IndexedStack(
           index: _bottomIndex,
           children: [
@@ -241,7 +242,7 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
       width: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF2E1F5E), Color(0xFF4A3080)],
+          colors: [Color(0xFF493673), Color(0xFFE67836)], // Purple to Orange for Engineer
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -250,7 +251,7 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
         children: [
           // Top bar: grid icon | title | three dots
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 10, 18, 12),
+            padding: EdgeInsets.fromLTRB(18, MediaQuery.of(context).padding.top + 10, 18, 12),
             child: Row(
               children: [
                 Icon(Icons.grid_view_rounded, color: Colors.white70, size: 22),
@@ -294,7 +295,7 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
               gradient: const LinearGradient(
-                colors: [Color(0xFFFFF7F0), Color(0xFFFFCC99)],
+                colors: [Color(0xFFE57B36), Color(0xFFB85315)], // Orange gradient
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -319,7 +320,7 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
                       child: Container(
                         width: 140,
                         height: 300,
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: Colors.white.withValues(alpha: 0.15),
                       ),
                     ),
                   ),
@@ -331,7 +332,7 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
                       child: Container(
                         width: 60,
                         height: 300,
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: Colors.white.withValues(alpha: 0.1),
                       ),
                     ),
                   ),
@@ -344,7 +345,7 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
                       height: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFFD96B27).withValues(alpha: 0.08),
+                        color: Colors.white.withValues(alpha: 0.08),
                       ),
                     ),
                   ),
@@ -388,26 +389,36 @@ class _EngineerMainContentState extends State<_EngineerMainContent> {
             right: 16,
             top: 0,
             bottom: 0,
-            left: 165, // updated to move text further right and clear the image
+            left: 155, // updated to move text further right and clear the image
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Your Machine\nOur Priority !',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18, // slightly bigger, bold
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFFD96B27),
-                    height: 1.25,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Engineer',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20, // slightly bigger, bold
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        height: 1.25,
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'start now and take better care of your business',
+                  'Diagnose issues, improve machine performance, and manage failure reports.',
                   style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: const Color(0xFFD96B27).withValues(alpha: 0.75),
+                    fontSize: 10,
+                    color: Colors.white.withValues(alpha: 0.85),
                     fontWeight: FontWeight.w500,
                     height: 1.4,
                   ),
