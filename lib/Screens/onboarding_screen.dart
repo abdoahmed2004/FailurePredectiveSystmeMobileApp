@@ -93,13 +93,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               left: 0,
               right: 0,
               child: Container(
-                height: MediaQuery.of(context).size.height * 0.5,
-                decoration: BoxDecoration(
+                height: MediaQuery.of(context).size.height * 0.55,
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Colors.black.withOpacity(0.8),
+                      Colors.black,
+                      Colors.black,
                       Colors.transparent,
                     ],
+                    stops: [0.0, 0.4, 1.0],
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                   ),
